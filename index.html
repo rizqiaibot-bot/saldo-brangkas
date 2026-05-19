@@ -553,11 +553,20 @@
 
       let nomor = 1;
 
-      transaksi.forEach((t, index) => {
-        if(dari && t.tanggal < dari) return;
-        if(sampai && t.tanggal > sampai) return;
+      let dataTampil = transaksi.map((t, index) => ({
+  ...t,
+  indexAsli: index
+}));
 
-        const saldoSetelah = hitungSaldoSampai(index);
+if(!dari && !sampai){
+  dataTampil = dataTampil.slice(-30).reverse();
+}
+
+dataTampil.forEach((t) => {
+  if(dari && t.tanggal < dari) return;
+  if(sampai && t.tanggal > sampai) return;
+
+  const saldoSetelah = hitungSaldoSampai(t.indexAsli);
         const badgeClass = t.jenis === 'MASUK' ? 'badge-masuk' : 'badge-keluar';
 
         tbody.innerHTML += `
