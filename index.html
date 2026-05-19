@@ -282,7 +282,7 @@
   <label>Nama Pengambil / User</label>
 
   <select id="pengambilKeluar">
-    <option value="">Pilih Nama Pengambil</option>
+    <option value="" selected disabled>Pilih Nama Pengambil</option>
     <option value="Rizkin">Rizkin</option>
     <option value="Imad">Imad</option>
     <option value="Mujahid">Mujahid</option>
@@ -488,6 +488,10 @@
       const nominal = Number(document.getElementById('nominalKeluar').value);
       const keterangan = document.getElementById('ketKeluar').value.trim();
       const pengambil = document.getElementById('pengambilKeluar').value.trim();
+      if(!pengambil){
+  alert('Pilih nama pengambil/user dulu.');
+  return;
+}
 
       if(!nominal || nominal <= 0){
         alert('Isi nominal keluar dengan benar.');
