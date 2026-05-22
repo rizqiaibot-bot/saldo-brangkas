@@ -121,43 +121,77 @@
     .btn-cyan{background:linear-gradient(135deg,#06b6d4,#0891b2);}
     .btn-gray{background:linear-gradient(135deg,#94a3b8,#64748b);}
     .btn-purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);}
-    .btn-orange{.audit-result{
-margin-top:14px;
-padding:12px;
-border-radius:10px;
-font-weight:800;
-font-size:14px;
-text-align:center;
+   .btn-orange{
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+}
+
+.audit-result{
+  margin-top:14px;
+  padding:12px;
+  border-radius:10px;
+  font-weight:800;
+  font-size:14px;
+  text-align:center;
 }
 
 .audit-plus{
-background:#dcfce7;
-color:#16a34a;
+  background:#dcfce7;
+  color:#16a34a;
 }
 
 .audit-minus{
-background:#fee2e2;
-color:#dc2626;
+  background:#fee2e2;
+  color:#dc2626;
 }
 
 .audit-cocok{
-background:#dbeafe;
-color:#2563eb;
+  background:#dbeafe;
+  color:#2563eb;
 }
-  background:linear-gradient(135deg,#f59e0b,#f97316);
-}
-    .btn-danger-outline{background:#fff1f2;color:#f43f5e;border:1px solid #fecdd3;margin-top:14px;}
 
-    .filter-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:0;}
-    .filter-title{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;margin-bottom:16px;}
- .filter-grid{
-display:flex;
-align-items:flex-end;
-gap:12px;}
+.btn-danger-outline{
+  background:#fff1f2;
+  color:#f43f5e;
+  border:1px solid #fecdd3;
+  margin-top:14px;
+}
+
+.filter-panel{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px;
+  margin-bottom:0;
+}
+
+.filter-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:20px;
+  font-weight:800;
+  margin-bottom:16px;
+}
+
+.filter-grid{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
 .filter-item{
-display:flex;
-flex-direction:column;
-justify-content:flex-end;
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+
+.filter-grid .btn{
+  width:auto;
+  white-space:nowrap;
+  margin-bottom:0;
+  height:44px;
 }
 
     .table-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto;box-shadow:var(--shadow);}
@@ -669,14 +703,27 @@ dataTampil.forEach((t) => {
             <td>${t.pengambil}</td>
             <td>${formatRupiah(saldoSetelah)}</td>
             <td>
-              <div class="actions">
-                <button class="mini-btn edit" onclick="editTransaksi('${t.id}')">
-                  <i class="fa-solid fa-pen"></i> Edit
-                </button>
-                <button class="mini-btn hapus" onclick="hapusTransaksi('${t.id}')">
-                  <i class="fa-regular fa-trash-can"></i> Hapus
-                </button>
-              </div>
+<div class="actions">
+
+<button class="mini-btn ${t.sudah_disalin ? 'cek-ok' : 'cek-empty'}"
+onclick="toggleDisalin('${t.id}', ${t.sudah_disalin})">
+
+<i class="fa-solid ${t.sudah_disalin ? 'fa-check' : 'fa-circle'}"></i>
+
+</button>
+
+<button class="mini-btn edit" onclick="editTransaksi('${t.id}')">
+<i class="fa-solid fa-pen"></i> Edit
+</button>
+
+<button class="mini-btn hapus" onclick="hapusTransaksi('${t.id}')">
+<i class="fa-regular fa-trash-can"></i> Hapus
+</button>
+
+</div>
+</td>
+
+
             </td>
           </tr>
         `;
