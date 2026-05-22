@@ -128,7 +128,17 @@
 
     .filter-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:0;}
     .filter-title{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;margin-bottom:16px;}
-    .filter-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1.2fr;gap:12px;align-items:end;}
+    .filter-grid{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.filter-item{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
 
     .table-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto;box-shadow:var(--shadow);}
     table{width:100%;border-collapse:collapse;min-width:980px;}
@@ -298,8 +308,15 @@
     <section class="filter-panel">
       <div class="filter-title"><i class="fa-solid fa-filter"></i> Filter Tanggal</div>
       <div class="filter-grid">
-        <div><label>Dari Tanggal</label><input id="filterDari" type="date"></div>
-        <div><label>Sampai Tanggal</label><input id="filterSampai" type="date"></div>
+        <div class="filter-item">
+  <label>Dari Tanggal</label>
+  <input id="filterDari" type="date">
+</div>
+
+<div class="filter-item">
+  <label>Sampai Tanggal</label>
+  <input id="filterSampai" type="date">
+</div>
         <button class="btn btn-cyan" onclick="renderData()"><i class="fa-solid fa-filter"></i> Terapkan Filter</button>
         <button class="btn btn-gray" onclick="resetFilter()"><i class="fa-solid fa-rotate-right"></i> Reset Filter</button>
         <button class="btn btn-purple" onclick="window.print()"><i class="fa-solid fa-print"></i> Print / Simpan PDF</button>
