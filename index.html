@@ -817,6 +817,29 @@ async function hapusTransaksi(id){
     );
 
   }
+}
+async function toggleDisalin(id, statusSekarang){
+
+  try{
+
+    const { error } = await supabaseClient
+      .from('brangkas_transaksi')
+      .update({
+        sudah_disalin: !statusSekarang
+      })
+      .eq('id', id);
+
+    if(error) throw error;
+
+    await loadData();
+
+  }catch(error){
+
+    alert(
+      'Gagal update checklist: ' + error.message
+    );
+
+  }
 
 }
 function tanggalBesokJakarta(){
