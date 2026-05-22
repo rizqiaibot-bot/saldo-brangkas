@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SALDO BRANGKAS - SUPABASE</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --dark:#070b17;
+      --dark2:#101827;
+      --bg:#f4f7fb;
+      --card:#ffffff;
+      --text:#0f172a;
+      --muted:#64748b;
+      --line:#e2e8f0;
+      --blue:#2563eb;
+      --green:#16a34a;
+      --red:#f43f5e;
+      --purple:#7c3aed;
+      --cyan:#0891b2;
+      --shadow:0 10px 28px rgba(15,23,42,.08);
+      --radius:18px;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
+    body{background:var(--bg);color:var(--text);}
+    .app{width:min(1360px, calc(100% - 32px));margin:0 auto;padding-bottom:30px;}
+
+    .header{
+      background:linear-gradient(135deg,var(--dark),var(--dark2));
+      color:#fff;text-align:center;padding:22px 16px 24px;
+      border-radius:0 0 10px 10px;box-shadow:0 8px 22px rgba(0,0,0,.18);margin-bottom:22px;
+    }
+    .header h1{font-size:34px;font-weight:800;letter-spacing:1.5px;display:flex;justify-content:center;align-items:center;gap:12px;}
+    .header h1 i{font-size:30px;}
+    .clock{margin-top:9px;font-size:16px;font-weight:600;opacity:.92;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .db-status{margin-top:9px;font-size:13px;font-weight:700;color:#bbf7d0;}
+
+    .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;}
+    .summary-card{min-height:106px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;display:flex;align-items:center;gap:18px;}
+    .summary-card.soft-blue{background:linear-gradient(135deg,#ffffff,#eff6ff);}
+    .summary-card.soft-green{background:linear-gradient(135deg,#ffffff,#ecfdf5);}
+    .summary-card.soft-red{background:linear-gradient(135deg,#ffffff,#fff1f2);}
+    .summary-card.soft-purple{background:linear-gradient(135deg,#ffffff,#f5f3ff);}
+    .big-icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:28px;flex:0 0 auto;}
+    .icon-blue{background:#dbeafe;color:var(--blue);}
+    .icon-green{background:#dcfce7;color:var(--green);}
+    .icon-red{background:#ffe4e6;color:#e11d48;}
+    .icon-purple{background:#ede9fe;color:var(--purple);}
+    .summary-card.soft-orange{
+  background:linear-gradient(135deg,#ffffff,#fffbeb);
+}
+
+.icon-orange{
+  background:#fef3c7;
+  color:#f59e0b;
+}
+.status-pill{
+  display:inline-flex;
+  margin-top:4px;
+  padding:6px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:800;
+  color:#fff;
+}
+
+.status-ok{
+  background:#16a34a;
+}
+
+.status-wait{
+  background:#f59e0b;
+}
+
+.status-empty{
+  background:#64748b;
+}
+
+.modal-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  margin-bottom:18px;
+}
+
+.hint{
+  font-size:13px;
+  color:#64748b;
+  background:#f8fafc;
+  border:1px dashed #cbd5e1;
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:14px;
+  line-height:1.45;
+}
+    .summary-card p{font-size:14px;font-weight:700;color:#334155;margin-bottom:8px;}
+    .summary-card h2{font-size:22px;line-height:1,15;font-weight:800;white-space:normal;}
+
+    .main-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:18px;}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;min-height:310px;}
+    .panel-title{display:flex;align-items:center;gap:12px;font-size:20px;margin-bottom:18px;font-weight:800;}
+    .small-icon{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex:0 0 auto;}
+
+    label{display:block;font-weight:700;font-size:14px;margin-bottom:8px;}
+    input, textarea, select{width:100%;border:1px solid #cfd8e3;background:#fff;border-radius:10px;padding:12px 13px;font-size:14px;outline:none;margin-bottom:14px;transition:.2s;}
+    input:focus, textarea:focus, select:focus{border-color:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.14);}
+    textarea{min-height:82px;resize:vertical;}
+
+    .btn{width:100%;border:none;border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;transition:.18s ease;}
+    .btn:hover{transform:translateY(-1px);filter:brightness(.98);}
+    .btn-blue{background:linear-gradient(135deg,#3b82f6,#1d4ed8);}
+    .btn-green{background:linear-gradient(135deg,#10b981,#22c55e);}
+    .btn-red{background:linear-gradient(135deg,#f43f5e,#fb7185);}
+    .btn-cyan{background:linear-gradient(135deg,#06b6d4,#0891b2);}
+    .btn-gray{background:linear-gradient(135deg,#94a3b8,#64748b);}
+    .btn-purple{background:linear-gradient(135deg,#a78bfa,#7c3aed);}
+    .btn-orange{
+  background:linear-gradient(135deg,#f59e0b,#f97316);
+}
+    .btn-danger-outline{background:#fff1f2;color:#f43f5e;border:1px solid #fecdd3;margin-top:14px;}
+
+    .filter-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:0;}
+    .filter-title{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;margin-bottom:16px;}
+    .filter-grid{
+  display:flex;
+  align-items:flex-end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.filter-item{
+  display:flex;
+  flex-direction:column;
+  justify-content:flex-end;
+}
+
+    .table-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto;box-shadow:var(--shadow);}
+    table{width:100%;border-collapse:collapse;min-width:980px;}
+    thead{background:linear-gradient(135deg,#0891b2,#0e7490);color:#fff;}
+    th,td{padding:13px 14px;font-size:14px;text-align:left;border-bottom:1px solid #edf2f7;vertical-align:middle;}
+    th{font-size:13px;font-weight:800;}
+    .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;}
+    .badge-masuk{background:#16a34a;}
+    .badge-keluar{background:#f43f5e;}
+    .actions{display:flex;gap:8px;}
+    .mini-btn{border:none;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;}
+    .edit{background:#fde68a;color:#1f2937;}
+    .hapus{background:#fb7185;color:#fff;}
+    .note{margin-top:14px;background:#eff6ff;border:1px solid #bfdbfe;color:#475569;padding:12px 14px;border-radius:10px;font-size:13px;}
+    .note i{color:#2563eb;margin-right:6px;}
+
+    @media(max-width:1100px){
+      .summary{grid-template-columns:repeat(2,1fr);}
+      .main-grid{grid-template-columns:1fr;}
+      .filter-grid{grid-template-columns:1fr 1fr;}
+    }
+    @media(max-width:640px){
+      .app{width:calc(100% - 20px);}
+      .header h1{font-size:26px;}
+      .summary{grid-template-columns:1fr;}
+      .summary-card h2{font-size:24px;}
+      .filter-grid{grid-template-columns:1fr;}
+    }
+    @media print{
+      body{background:#fff;}
+      .panel,.filter-panel,.btn-danger-outline,.note{display:none;}
+      .app{width:100%;}
+      .header{border-radius:0;}
+      .summary-card{box-shadow:none;}
+      .table-wrap{box-shadow:none;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="header">
+      <h1><i class="fa-solid fa-vault"></i> SALDO BRANGKAS</h1>
+      <div class="clock"><i class="fa-regular fa-clock"></i><span id="liveClock">Memuat waktu...</span></div>
+      <div class="db-status" id="dbStatus">Supabase: menghubungkan...</div>
+    </header>
+
+    <section class="summary">
+      <div class="summary-card soft-blue">
+        <div class="big-icon icon-blue"><i class="fa-solid fa-vault"></i></div>
+        <div><p>Saldo Awal</p><h2 id="saldoAwalText">Rp 0</h2></div>
+      </div>
+      <div class="summary-card soft-green">
+        <div class="big-icon icon-green"><i class="fa-solid fa-arrow-down"></i></div>
+        <div><p>Total Uang Masuk</p><h2 id="totalMasukText" style="color:#16a34a;">Rp 0</h2></div>
+      </div>
+      <div class="summary-card soft-red">
+        <div class="big-icon icon-red"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+        <div><p>Total Uang Keluar</p><h2 id="totalKeluarText" style="color:#e11d48;">Rp 0</h2></div>
+      </div>
+      <div class="summary-card soft-purple">
+        <div class="big-icon icon-purple"><i class="fa-solid fa-cash-register"></i></div>
+        <div><p>Sisa Saldo Brangkas</p><h2 id="sisaSaldoText" style="color:#7c3aed;">Rp 0</h2></div>
+      </div>
+      <div class="summary-card soft-orange">
+  <div class="big-icon icon-orange">
+    <i class="fa-solid fa-coins"></i>
+  </div>
+  <div>
+    <p>Modal Laci Hari Ini</p>
+    <h2 id="modalNominalText" style="color:#f59e0b;">Rp 500.000</h2>
+    <span id="modalStatusText" class="status-pill status-empty">Belum Ada Closing</span>
+  </div>
+  </div>
+    </section>
+
+    <section class="modal-grid">
+  <div class="panel">
+    <div class="panel-title">
+      <span class="small-icon icon-orange">
+        <i class="fa-solid fa-moon"></i>
+      </span>
+      Closing Malam Laci Kasir
+    </div>
+
+    <div class="hint">
+      Masukkan total uang di laci kasir. Sistem otomatis menyisakan modal Rp 500.000, sisanya masuk brangkas.
+    </div>
+
+    <label>Total Uang di Laci Kasir</label>
+    <input id="totalLaciClosing" type="number" placeholder="Contoh: 2300000">
+
+    <button class="btn btn-orange" onclick="closingLaciKasir()">
+      <i class="fa-solid fa-vault"></i>
+      Closing: Masukkan Sisa ke Brangkas
+    </button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span class="small-icon icon-green">
+        <i class="fa-solid fa-coins"></i>
+      </span>
+      Tarik Modal Laci ke Brangkas
+    </div>
+
+    <div class="hint">
+      Klik saat modal laci Rp 500.000 sudah dikembalikan ke brangkas.
+    </div>
+
+    <button class="btn btn-green" onclick="tarikModalKeBrangkas()">
+      <i class="fa-solid fa-circle-check"></i>
+      Tandai Sudah Dikembalikan
+    </button>
+  </div>
+</section>
+<section class="main-grid">
+      <div class="panel">
+        <div class="panel-title"><span class="small-icon icon-blue"><i class="fa-solid fa-gear"></i></span>Atur Saldo Awal</div>
+        <label>Saldo Awal Brangkas</label>
+        <input id="saldoAwalInput" type="number" placeholder="Contoh: 500000">
+        <button class="btn btn-blue" onclick="simpanSaldoAwal()"><i class="fa-regular fa-floppy-disk"></i> Simpan Saldo Awal</button>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title"><span class="small-icon icon-green"><i class="fa-solid fa-arrow-down"></i></span>Uang Masuk</div>
+        <label>Nominal Masuk</label>
+        <input id="nominalMasuk" type="number" placeholder="Contoh: 250000">
+        <label>Keterangan</label>
+        <textarea id="ketMasuk" placeholder="Contoh: Pembayaran agen..."></textarea>
+        <button class="btn btn-green" onclick="tambahMasuk()"><i class="fa-solid fa-circle-plus"></i> Tambah Uang Masuk</button>
+      </div>
+
+      <div class="panel">
+  <div class="panel-title">
+    <span class="small-icon icon-red">
+      <i class="fa-solid fa-arrow-up-from-bracket"></i>
+    </span>
+    Uang Keluar Operasional
+  </div>
+
+  <label>Nominal Keluar</label>
+  <input id="nominalKeluar"
+  type="number"
+  placeholder="Contoh: 50000">
+
+  <label>Keterangan</label>
+  <textarea id="ketKeluar"
+  placeholder="Contoh: Beli plastik, bensin, parkir, dll"></textarea>
+
+  <label>Nama Pengambil / User</label>
+
+  <select id="pengambilKeluar">
+    <option value="" selected disabled>Pilih Nama Pengambil</option>
+    <option value="Rizkin">Rizkin</option>
+    <option value="Imad">Imad</option>
+    <option value="Mujahid">Mujahid</option>
+  </select>
+
+  <button class="btn btn-red" onclick="tambahKeluar()">
+    <i class="fa-solid fa-circle-plus"></i>
+    Tambah Uang Keluar
+  </button>
+</div>
+</section>
+
+    <section class="filter-panel">
+      <div class="filter-title"><i class="fa-solid fa-filter"></i> Filter Tanggal</div>
+      <div class="filter-grid">
+        <div class="filter-item">
+  <label>Dari Tanggal</label>
+  <input id="filterDari" type="date">
+</div>
+
+<div class="filter-item">
+  <label>Sampai Tanggal</label>
+  <input id="filterSampai" type="date">
+</div>
+        <button class="btn btn-cyan" onclick="renderData()"><i class="fa-solid fa-filter"></i> Terapkan Filter</button>
+        <button class="btn btn-gray" onclick="resetFilter()"><i class="fa-solid fa-rotate-right"></i> Reset Filter</button>
+        <button class="btn btn-purple" onclick="window.print()"><i class="fa-solid fa-print"></i> Print / Simpan PDF</button>
+      </div>
+    </section>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>No</th><th>Tanggal</th><th>Jam WIB</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th><th>Pengambil / User</th><th>Saldo Setelah Transaksi</th><th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyData"></tbody>
+      </table>
+    </div>
+
+    <button class="btn btn-danger-outline" onclick="hapusSemuaData()">
+      <i class="fa-regular fa-trash-can"></i> Hapus Semua Data
+    </button>
+
+    <div class="note">
+      <i class="fa-solid fa-circle-info"></i>
+      Data sekarang tersimpan di Supabase. Kalau browser ditutup atau ganti perangkat, data tetap aman selama Supabase aktif.
+    </div>
+  </div>
+
+  <script>
+    /*
+      WAJIB DIISI DARI SUPABASE:
+      1. Masuk Supabase > Project Settings > API
+      2. Copy Project URL ke SUPABASE_URL
+      3. Copy anon public key ke SUPABASE_ANON_KEY
+    */
+    const SUPABASE_URL = "https://fpjfdxpdaqtopjorqood.supabase.co";
+
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZwamZkeHBkYXF0b3Bqb3Jxb29kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjczMDkwNjUsImV4cCI6MjA4MjY2OTA2NX0.x8KgYQcSm9EMAk_vDzfDIYw4HY0vQnL4Sl_dyQ2lQN0";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let saldoAwal = 0;
+    let transaksi = [];
+    const MODAL_LACI = 500000;
+    let modalHariIni = null;
+
+    function setStatus(text, ok = true){
+      const el = document.getElementById('dbStatus');
+      el.textContent = text;
+      el.style.color = ok ? '#bbf7d0' : '#fecaca';
+    }
+
+    function formatRupiah(angka){
+      return new Intl.NumberFormat('id-ID', {
+        style:'currency',
+        currency:'IDR',
+        minimumFractionDigits:0
+      }).format(angka);
+    }
+
+    function waktuJakarta(){
+      const now = new Date();
+      const tanggal = new Intl.DateTimeFormat('en-CA', {
+        timeZone:'Asia/Jakarta',
+        year:'numeric',
+        month:'2-digit',
+        day:'2-digit'
+      }).format(now);
+
+      const jam = new Intl.DateTimeFormat('id-ID', {
+        timeZone:'Asia/Jakarta',
+        hour:'2-digit',
+        minute:'2-digit',
+        second:'2-digit',
+        hour12:false
+      }).format(now).replaceAll('.', ':');
+
+      return {tanggal, jam};
+    }
+
+    function updateClock(){
+      const w = waktuJakarta();
+      document.getElementById('liveClock').textContent = `${w.tanggal} | ${w.jam} WIB`;
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    async function loadData(){
+      try{
+        if(SUPABASE_URL.includes('ISI_DENGAN') || SUPABASE_ANON_KEY.includes('ISI_DENGAN')){
+          setStatus('Supabase belum disetting: isi URL dan ANON KEY dulu.', false);
+          renderData();
+          return;
+        }
+
+        setStatus('Supabase: mengambil data...');
+
+        const { data: settingData, error: settingError } = await supabaseClient
+          .from('brangkas_setting')
+          .select('*')
+          .eq('id', 1)
+          .single();
+
+        if(settingError && settingError.code !== 'PGRST116') throw settingError;
+
+        saldoAwal = settingData ? Number(settingData.saldo_awal) : 0;
+
+        const { data: trxData, error: trxError } = await supabaseClient
+          .from('brangkas_transaksi')
+          .select('*')
+          .order('created_at', { ascending:true });
+
+        if(trxError) throw trxError;
+
+        transaksi = trxData || [];
+        setStatus('Supabase: tersambung dan data aman.');
+        renderData();
+
+      }catch(error){
+        console.error(error);
+        setStatus('Supabase error: cek tabel, URL, ANON KEY, dan RLS policy.', false);
+        alert('Gagal mengambil data Supabase: ' + error.message);
+      }
+    }
+
+    async function simpanSaldoAwal(){
+      const input = document.getElementById('saldoAwalInput');
+      const nominal = Number(input.value);
+
+      if(!nominal || nominal < 0){
+        alert('Isi saldo awal dengan benar.');
+        return;
+      }
+
+      try{
+        const { error } = await supabaseClient
+          .from('brangkas_setting')
+          .upsert({ id:1, saldo_awal:nominal, updated_at:new Date().toISOString() });
+
+        if(error) throw error;
+
+        saldoAwal = nominal;
+        input.value = '';
+        await loadData();
+
+      }catch(error){
+        alert('Gagal simpan saldo awal: ' + error.message);
+      }
+    }
+
+    async function tambahMasuk(){
+      const nominal = Number(document.getElementById('nominalMasuk').value);
+      const keterangan = document.getElementById('ketMasuk').value.trim();
+
+      if(!nominal || nominal <= 0){
+        alert('Isi nominal masuk dengan benar.');
+        return;
+      }
+
+      const w = waktuJakarta();
+
+      try{
+        const { error } = await supabaseClient
+          .from('brangkas_transaksi')
+          .insert({
+            tanggal:w.tanggal,
+            jam:w.jam,
+            jenis:'MASUK',
+            nominal,
+            keterangan:keterangan || '-',
+            pengambil:'-'
+          });
+
+        if(error) throw error;
+
+        document.getElementById('nominalMasuk').value = '';
+        document.getElementById('ketMasuk').value = '';
+        await loadData();
+
+      }catch(error){
+        alert('Gagal tambah uang masuk: ' + error.message);
+      }
+    }
+
+    async function tambahKeluar(){
+      const nominal = Number(document.getElementById('nominalKeluar').value);
+      const keterangan = document.getElementById('ketKeluar').value.trim();
+      const pengambil = document.getElementById('pengambilKeluar').value.trim();
+      if(!pengambil){
+  alert('Pilih nama pengambil/user dulu.');
+  return;
+}
+
+      if(!nominal || nominal <= 0){
+        alert('Isi nominal keluar dengan benar.');
+        return;
+      }
+
+      const w = waktuJakarta();
+
+      try{
+        const { error } = await supabaseClient
+          .from('brangkas_transaksi')
+          .insert({
+            tanggal:w.tanggal,
+            jam:w.jam,
+            jenis:'KELUAR',
+            nominal,
+            keterangan:keterangan || '-',
+            pengambil:pengambil || '-'
+          });
+
+        if(error) throw error;
+
+        document.getElementById('nominalKeluar').value = '';
+        document.getElementById('ketKeluar').value = '';
+        document.getElementById('pengambilKeluar').value = '';
+        await loadData();
+
+      }catch(error){
+        alert('Gagal tambah uang keluar: ' + error.message);
+      }
+    }
+
+    function hitungSaldoSampai(indexAkhir){
+      let saldo = saldoAwal;
+      for(let i = 0; i <= indexAkhir; i++){
+        if(transaksi[i].jenis === 'MASUK') saldo += Number(transaksi[i].nominal);
+        if(transaksi[i].jenis === 'KELUAR') saldo -= Number(transaksi[i].nominal);
+      }
+      return saldo;
+    }
+
+    function renderData(){
+      const tbody = document.getElementById('tbodyData');
+      tbody.innerHTML = '';
+
+      const dari = document.getElementById('filterDari').value;
+      const sampai = document.getElementById('filterSampai').value;
+
+      let totalMasuk = 0;
+      let totalKeluar = 0;
+
+      transaksi.forEach(t => {
+        if(t.jenis === 'MASUK') totalMasuk += Number(t.nominal);
+        if(t.jenis === 'KELUAR') totalKeluar += Number(t.nominal);
+      });
+
+      const sisaSaldo = saldoAwal + totalMasuk - totalKeluar;
+
+      document.getElementById('saldoAwalText').textContent = formatRupiah(saldoAwal);
+      document.getElementById('totalMasukText').textContent = formatRupiah(totalMasuk);
+      document.getElementById('totalKeluarText').textContent = formatRupiah(totalKeluar);
+      document.getElementById('sisaSaldoText').textContent = formatRupiah(sisaSaldo);
+
+      let nomor = 1;
+
+      let dataTampil = transaksi.map((t, index) => ({
+  ...t,
+  indexAsli: index
+}));
+
+if(!dari && !sampai){
+  dataTampil = dataTampil.slice(-30).reverse();
+}
+
+dataTampil.forEach((t) => {
+  if(dari && t.tanggal < dari) return;
+  if(sampai && t.tanggal > sampai) return;
+
+  const saldoSetelah = hitungSaldoSampai(t.indexAsli);
+        const badgeClass = t.jenis === 'MASUK' ? 'badge-masuk' : 'badge-keluar';
+
+        tbody.innerHTML += `
+          <tr>
+            <td>${nomor++}</td>
+            <td>${t.tanggal}</td>
+            <td>${t.jam}</td>
+            <td><span class="badge ${badgeClass}">${t.jenis}</span></td>
+            <td>${formatRupiah(Number(t.nominal))}</td>
+            <td>${t.keterangan}</td>
+            <td>${t.pengambil}</td>
+            <td>${formatRupiah(saldoSetelah)}</td>
+            <td>
+              <div class="actions">
+                <button class="mini-btn edit" onclick="editTransaksi('${t.id}')">
+                  <i class="fa-solid fa-pen"></i> Edit
+                </button>
+                <button class="mini-btn hapus" onclick="hapusTransaksi('${t.id}')">
+                  <i class="fa-regular fa-trash-can"></i> Hapus
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      });
+
+      if(nomor === 1){
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align:center;color:#64748b;padding:22px;">
+              Belum ada transaksi.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    async function editTransaksi(id){
+
+  const t = transaksi.find(x => String(x.id) === String(id));
+
+  if(!t) return;
+
+  const nominalBaru = prompt(
+    'Edit nominal:',
+    t.nominal
+  );
+
+  if(nominalBaru === null) return;
+
+  const ketBaru = prompt(
+    'Edit keterangan:',
+    t.keterangan
+  );
+
+  if(ketBaru === null) return;
+
+  let pengambilBaru = t.pengambil;
+
+  if(t.jenis === 'KELUAR'){
+
+    pengambilBaru = prompt(
+      'Edit nama pengambil/user:',
+      t.pengambil
+    );
+
+    if(pengambilBaru === null) return;
+  }
+
+  try{
+
+    const { error } = await supabaseClient
+      .from('brangkas_transaksi')
+      .update({
+        nominal:Number(nominalBaru),
+        keterangan:ketBaru.trim() || '-',
+        pengambil:pengambilBaru.trim() || '-'
+      })
+      .eq('id', id);
+
+    if(error) throw error;
+
+    await loadData();
+
+  }catch(error){
+
+    alert(
+      'Gagal edit transaksi: ' + error.message
+    );
+
+  }
+}
+async function hapusTransaksi(id){
+
+  if(!confirm('Yakin ingin menghapus transaksi ini?')) return;
+
+  try{
+
+    const { error } = await supabaseClient
+      .from('brangkas_transaksi')
+      .delete()
+      .eq('id', id);
+
+    if(error) throw error;
+
+    await loadData();
+
+  }catch(error){
+
+    alert(
+      'Gagal hapus transaksi: ' + error.message
+    );
+
+  }
+
+}
+function tanggalBesokJakarta(){
+  const now = new Date();
+  const besok = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone:'Asia/Jakarta',
+    year:'numeric',
+    month:'2-digit',
+    day:'2-digit'
+  }).format(besok);
+}
+
+async function closingLaciKasir(){
+  const totalLaci = Number(document.getElementById('totalLaciClosing').value);
+
+  if(!totalLaci || totalLaci <= 0){
+    alert('Isi total uang laci kasir dengan benar.');
+    return;
+  }
+
+  if(totalLaci < MODAL_LACI){
+    alert('Total uang laci kurang dari modal wajib Rp 500.000.');
+    return;
+  }
+
+  const masukBrangkas = totalLaci - MODAL_LACI;
+  const w = waktuJakarta();
+  const tanggalModal = tanggalBesokJakarta();
+
+  if(!confirm(
+    `Closing laci kasir?\n\nTotal laci: ${formatRupiah(totalLaci)}\nDisisakan modal besok: ${formatRupiah(MODAL_LACI)}\nMasuk brangkas: ${formatRupiah(masukBrangkas)}`
+  )) return;
+
+  try{
+    const { error: trxError } = await supabaseClient
+      .from('brangkas_transaksi')
+      .insert({
+        tanggal:w.tanggal,
+        jam:w.jam,
+        jenis:'MASUK',
+        nominal:masukBrangkas,
+        keterangan:`Closing laci kasir. Total laci ${formatRupiah(totalLaci)}. Disisakan modal ${formatRupiah(MODAL_LACI)}.`,
+        pengambil:'Sistem'
+      });
+
+    if(trxError) throw trxError;
+
+    const { error: modalError } = await supabaseClient
+      .from('brangkas_modal_laci')
+      .upsert({
+        tanggal_modal:tanggalModal,
+        nominal_modal:MODAL_LACI,
+        status:'BELUM_DIKEMBALIKAN',
+        closing_at:new Date().toISOString(),
+        returned_at:null
+      }, { onConflict:'tanggal_modal' });
+
+    if(modalError) throw modalError;
+
+    document.getElementById('totalLaciClosing').value = '';
+    await loadData();
+
+  }catch(error){
+    alert('Gagal closing laci kasir: ' + error.message);
+  }
+}
+
+async function tarikModalKeBrangkas(){
+  const w = waktuJakarta();
+
+  if(modalHariIni && modalHariIni.status === 'SUDAH_DIKEMBALIKAN'){
+    alert('Modal laci hari ini sudah dikembalikan.');
+    return;
+  }
+
+  if(!confirm(`Tarik modal laci ${formatRupiah(MODAL_LACI)} ke brangkas?`)) return;
+
+  try{
+    const { error: trxError } = await supabaseClient
+      .from('brangkas_transaksi')
+      .insert({
+        tanggal:w.tanggal,
+        jam:w.jam,
+        jenis:'MASUK',
+        nominal:MODAL_LACI,
+        keterangan:'Tarik modal laci kasir ke brangkas',
+        pengambil:'Sistem'
+      });
+
+    if(trxError) throw trxError;
+
+    const { error: modalError } = await supabaseClient
+      .from('brangkas_modal_laci')
+      .upsert({
+        tanggal_modal:w.tanggal,
+        nominal_modal:MODAL_LACI,
+        status:'SUDAH_DIKEMBALIKAN',
+        returned_at:new Date().toISOString()
+      }, { onConflict:'tanggal_modal' });
+
+    if(modalError) throw modalError;
+
+    await loadData();
+
+  }catch(error){
+    alert('Gagal tarik modal: ' + error.message);
+  }
+}
+
+function renderStatusModal(){
+  const nominal = document.getElementById('modalNominalText');
+  const status = document.getElementById('modalStatusText');
+
+  if(!nominal || !status) return;
+
+  nominal.textContent = formatRupiah(MODAL_LACI);
+
+  if(!modalHariIni){
+    status.textContent = 'Belum Ada Closing';
+    status.className = 'status-pill status-empty';
+    return;
+  }
+
+  if(modalHariIni.status === 'SUDAH_DIKEMBALIKAN'){
+    status.textContent = 'Sudah Dikembalikan';
+    status.className = 'status-pill status-ok';
+  }else{
+    status.textContent = 'Belum Dikembalikan';
+    status.className = 'status-pill status-wait';
+  }
+}
+    function resetFilter(){
+      document.getElementById('filterDari').value = '';
+      document.getElementById('filterSampai').value = '';
+      renderData();
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
