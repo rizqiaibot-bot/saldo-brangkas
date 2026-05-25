@@ -175,23 +175,26 @@
 }
 
 .filter-grid{
-  display:flex;
-  align-items:flex-end;
-  gap:12px;
-  flex-wrap:wrap;
+display:grid;
+grid-template-columns:170px 170px 150px 130px 180px;
+gap:12px;
+align-items:end;
 }
 
 .filter-item{
-  display:flex;
-  flex-direction:column;
-  justify-content:flex-end;
+display:flex;
+flex-direction:column;
+}
+
+.filter-item input{
+margin-bottom:0;
 }
 
 .filter-grid .btn{
-  width:auto;
-  white-space:nowrap;
-  margin-bottom:0;
-  height:44px;
+width:100%;
+height:44px;
+white-space:nowrap;
+margin-bottom:0;
 }
 
     .table-wrap{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:auto;box-shadow:var(--shadow);}
