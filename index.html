@@ -176,22 +176,23 @@
 
 .filter-grid {
   display: grid;
-  /* UBAH DI SINI: 
-    Kolom ke-5 kita jadikan 1fr (sebagai ruang kosong/pembatas di tengah).
-    Kolom ke-6 kita isi 150px (pas dengan ukuran tombol print).
-  */
+  /* Kolom ke-5 (1fr) sebagai pendorong, kolom ke-6 (150px) khusus untuk tombol Print */
   grid-template-columns: 170px 170px 150px 130px 1fr 150px;
   gap: 12px;
   align-items: end;
 }
 
 .filter-grid .btn-purple {
-  /* UBAH DI SINI:
-    Kita paksa tombol print masuk ke kolom ke-6 (paling kanan) 
-    dan hapus justify-self:end agar ukurannya pas 150px mengikuti kolom.
-  */
   grid-column: 6;
-  width: 100%; 
+  width: 100%;
+  /* Menghilangkan sisa space justify-self agar teks otomatis ke tengah */
+  justify-self: stretch; 
+  
+  /* Memastikan teks dan icon print tepat berada di tengah-tengah tombol */
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Jarak antara icon print dan tulisan 'Print' */
 }
 
 .filter-item {
