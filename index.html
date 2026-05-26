@@ -176,10 +176,10 @@
 
 .filter-grid {
   display: grid;
-  /* Kolom ke-5 (1fr) sebagai pendorong, kolom ke-6 (150px) khusus untuk tombol Print */
-  grid-template-columns: 170px 170px 150px 130px 1fr 150px;
+  grid-template-columns: 170px 170px 150px 130px 1fr 50px; /* Diubah jadi 50px */
   gap: 12px;
   align-items: end;
+
 }
 
 .filter-grid .btn-purple {
@@ -425,21 +425,20 @@ height:44px;
     </div>
 
     <button class="btn btn-cyan" onclick="renderData()">
-      <i class="fa-solid fa-filter"></i>
-      Terapkan Filter
-    </button>
+  <i class="fa-solid fa-filter"></i>
+  Terapkan Filter
+</button>
 
-    <button class="btn btn-gray" onclick="resetFilter()">
-      <i class="fa-solid fa-rotate-right"></i>
-      Reset Filter
-    </button>
+<button class="btn btn-gray" onclick="resetFilter()">
+  <i class="fa-solid fa-rotate-right"></i>
+  Reset Filter
+</button>
 
-    <button class="btn btn-purple" onclick="window.print()">
-      <i class="fa-solid fa-print"></i>
-      Print / Simpan PDF
-    </button>
+<button class="btn btn-purple" onclick="window.print()">
+  <i class="fa-solid fa-print"></i>
+</button>
 
-  </div>
+</div>
 </section>
 
     <div class="table-wrap">
