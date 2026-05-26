@@ -176,17 +176,22 @@
 
 .filter-grid {
   display: grid;
-  /* UBAH: Berikan kolom kelima ukuran auto, lalu tambah kolom ke-6 dengan 1fr */
-  grid-template-columns: 170px 170px 150px 130px auto 1fr;
+  /* UBAH DI SINI: 
+    Kolom ke-5 kita jadikan 1fr (sebagai ruang kosong/pembatas di tengah).
+    Kolom ke-6 kita isi 150px (pas dengan ukuran tombol print).
+  */
+  grid-template-columns: 170px 170px 150px 130px 1fr 150px;
   gap: 12px;
   align-items: end;
 }
 
-/* UBAH: Dorong tombol ke kolom paling kanan (kolom 6) dan samakan lebarnya */
 .filter-grid .btn-purple {
-  grid-column: 6;       /* Memaksa tombol masuk ke kolom 6 (paling kanan) */
-  justify-self: end;    /* Tetap mepet ke kanan */
-  width: 150px;         /* UBAH: Samakan nilainya dengan kolom ke-3 (Terapkan Filter) */
+  /* UBAH DI SINI:
+    Kita paksa tombol print masuk ke kolom ke-6 (paling kanan) 
+    dan hapus justify-self:end agar ukurannya pas 150px mengikuti kolom.
+  */
+  grid-column: 6;
+  width: 100%; 
 }
 
 .filter-item {
