@@ -305,7 +305,7 @@ height:44px;
     </div>
 
     <div class="hint">
-      Masukkan total uang di laci kasir. Sistem otomatis menyisakan modal Rp 500.000, sisanya masuk brangkas.
+      Masukkan total uang di laci kasir. Sistem otomatis menyisakan modal <span class="modalLaciText">Rp 500.000</span>, sisanya masuk brangkas.
     </div>
 
     <label>Total Uang di Laci Kasir</label>
@@ -326,7 +326,7 @@ height:44px;
     </div>
 
     <div class="hint">
-      Klik saat modal laci Rp 500.000 sudah dikembalikan ke brangkas.
+      Klik saat modal laci <span class="modalLaciText">Rp 500.000</span> sudah dikembalikan ke brangkas.
     </div>
 
     <button class="btn btn-green" onclick="tarikModalKeBrangkas()">
@@ -1072,6 +1072,10 @@ function ubahModalLaci(){
 
   document.getElementById('modalNominalText').textContent =
     formatRupiah(MODAL_LACI);
+    
+    document.querySelectorAll('.modalLaciText').forEach(el => {
+  el.textContent = formatRupiah(MODAL_LACI);
+});
 
   document.getElementById('modalLaciInput').value = '';
 
