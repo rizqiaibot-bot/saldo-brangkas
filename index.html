@@ -1057,7 +1057,7 @@ document.getElementById('auditKet').value = '';
 }catch(error){
 alert('Gagal simpan audit: ' + error.message);
 }
-
+   }
 function ubahModalLaci(){
 
   const nominal =
@@ -1072,7 +1072,7 @@ function ubahModalLaci(){
 
   document.getElementById('modalNominalText').textContent =
     formatRupiah(MODAL_LACI);
-    
+
     document.querySelectorAll('.modalLaciText').forEach(el => {
   el.textContent = formatRupiah(MODAL_LACI);
 });
@@ -1083,7 +1083,8 @@ function ubahModalLaci(){
     'Modal laci berhasil diubah menjadi ' +
     formatRupiah(MODAL_LACI)
   );
-}} loadData();
+}
+loadData();
   </script>
 </body>
 </html>
