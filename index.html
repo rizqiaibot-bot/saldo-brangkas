@@ -286,6 +286,10 @@ height:44px;
   <div>
     <p>Modal Laci Hari Ini</p>
     <h2 id="modalNominalText" style="color:#f59e0b;">Rp 500.000</h2>
+    <input id="modalLaciInput" type="number" placeholder="Ubah modal laci">
+<button class="btn btn-orange" onclick="ubahModalLaci()">
+  Simpan Modal Laci
+</button>
     <span id="modalStatusText" class="status-pill status-empty">Belum Ada Closing</span>
   </div>
   </div>
@@ -477,7 +481,7 @@ height:44px;
 
     let saldoAwal = 0;
     let transaksi = [];
-    const MODAL_LACI = 500000;
+    let MODAL_LACI = 500000;
     let modalHariIni = null;
 
     function setStatus(text, ok = true){
@@ -1054,7 +1058,28 @@ document.getElementById('auditKet').value = '';
 alert('Gagal simpan audit: ' + error.message);
 }
 
-} loadData();
+function ubahModalLaci(){
+
+  const nominal =
+    Number(document.getElementById('modalLaciInput').value);
+
+  if(!nominal || nominal <= 0){
+    alert('Isi nominal modal laci dengan benar');
+    return;
+  }
+
+  MODAL_LACI = nominal;
+
+  document.getElementById('modalNominalText').textContent =
+    formatRupiah(MODAL_LACI);
+
+  document.getElementById('modalLaciInput').value = '';
+
+  alert(
+    'Modal laci berhasil diubah menjadi ' +
+    formatRupiah(MODAL_LACI)
+  );
+}} loadData();
   </script>
 </body>
 </html>
