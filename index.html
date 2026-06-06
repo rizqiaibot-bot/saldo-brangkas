@@ -369,6 +369,7 @@
           .from('brangkas_transaksi')
           .select('*')
           .order('created_at', { ascending:true });
+          .limit(100);
 
         if(trxError) throw trxError;
 
@@ -524,7 +525,7 @@
 
       // DI SINI ADALAH PERUBAHANNYA: Diubah dari slice(-30) menjadi slice(-50)
       if(!dari && !sampai && jenisFilter === 'SEMUA'){
-        dataTampil = dataTampil.slice(-50).reverse();
+        dataTampil = dataTampil.slice(-100).reverse();
       } else {
         dataTampil = dataTampil.reverse(); 
       }
