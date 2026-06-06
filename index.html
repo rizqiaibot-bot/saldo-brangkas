@@ -369,7 +369,7 @@
           .from('brangkas_transaksi')
           .select('*')
           .order('created_at', { ascending:true });
-          .limit(100);
+      
 
         if(trxError) throw trxError;
 
