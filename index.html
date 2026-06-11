@@ -146,6 +146,13 @@
       border-radius: 10px;
       border: 1px solid #cfd8e3;
     }
+    .save-status {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      display: block;
+      text-align: right;
+    }
 
     @media(max-width:1100px){
       .summary{grid-template-columns:repeat(2,1fr);}
@@ -217,7 +224,8 @@
         <div class="big-icon icon-cyan"><i class="fa-regular fa-sticky-note"></i></div>
         <div style="width: 100%;">
           <p>Catatan</p>
-          <textarea class="note-textarea" placeholder="Tulis catatan sementara di sini..."></textarea>
+          <textarea class="note-textarea" placeholder="Tulis catatan sementara di sini..." oninput="autoSaveCatatan()"></textarea>
+          <span id="saveStatus" class="save-status">Terbaca dari Supabase</span>
         </div>
       </div>
     </section>
@@ -337,6 +345,7 @@
     let transaksi = [];
     let MODAL_LACI = 500000;
     let modalHariIni = null;
+    let saveTimeout = null;
 
     function setStatus(text, ok = true){
       const el = document.getElementById('dbStatus');
@@ -399,6 +408,11 @@
         if(settingError && settingError.code !== 'PGRST116') throw settingError;
 
         saldoAwal = settingData ? Number(settingData.saldo_awal) : 0;
+        
+        // Memuat catatan dari Supabase ke dalam textarea
+        if (settingData && settingData.catatan) {
+          document.querySelector('.note-textarea').value = settingData.catatan;
+        }
 
         const { data: trxData, error: trxError } = await supabaseClient
           .from('brangkas_transaksi')
@@ -417,6 +431,31 @@
         setStatus('Supabase error: cek tabel, URL, ANON KEY, dan RLS policy.', false);
         alert('Gagal mengambil data Supabase: ' + error.message);
       }
+    }
+
+    // Fungsi simpan otomatis untuk Catatan ke Supabase
+    function autoSaveCatatan() {
+      const text = document.querySelector('.note-textarea').value;
+      const statusEl = document.getElementById('saveStatus');
+      statusEl.textContent = "Sedang mengetik...";
+      statusEl.style.color = "var(--purple)";
+
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(async () => {
+        try {
+          const { error } = await supabaseClient
+            .from('brangkas_setting')
+            .upsert({ id: 1, catatan: text, updated_at: new Date().toISOString() });
+
+          if (error) throw error;
+          statusEl.textContent = "Otomatis tersimpan di Supabase";
+          statusEl.style.color = "var(--green)";
+        } catch (err) {
+          statusEl.textContent = "Gagal menyimpan ke DB!";
+          statusEl.style.color = "var(--red)";
+          console.error(err);
+        }
+      }, 1500); // Menyimpan otomatis 1.5 detik setelah berhenti mengetik
     }
 
     async function simpanSaldoAwal(){
