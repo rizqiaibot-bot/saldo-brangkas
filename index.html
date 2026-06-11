@@ -62,7 +62,6 @@
     .summary-card.soft-orange{background:linear-gradient(135deg,#ffffff,#fffbeb);}
     .icon-orange{background:#fef3c7;color:#f59e0b;}
     .summary-card.soft-cyan{background:linear-gradient(135deg,#ffffff,#ecfeff);}
-    .icon-cyan{background:#cffafe;color:var(--cyan);}
     
     .status-pill{display:inline-flex;margin-top:4px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;color:#fff;}
     .status-ok{background:#16a34a;}
@@ -134,24 +133,35 @@
     .note{margin-top:14px;background:#eff6ff;border:1px solid #bfdbfe;color:#475569;padding:12px 14px;border-radius:10px;font-size:13px;}
     .note i{color:#2563eb;margin-right:6px;}
 
+    /* Form Catatan Luas Tanpa Icon Samping */
     .note-textarea {
       width: 100%;
-      height: 75px;
-      min-height: 75px;
+      height: 78px;
+      min-height: 78px;
       font-size: 14px;
-      padding: 10px;
+      padding: 12px;
       margin-top: 5px;
       margin-bottom: 0;
       resize: none;
       border-radius: 10px;
       border: 1px solid #cfd8e3;
     }
-    .save-status {
+    .save-badge-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 6px;
+    }
+    .save-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 6px;
       font-size: 11px;
-      color: var(--muted);
-      margin-top: 4px;
-      display: block;
-      text-align: right;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
     }
 
     @media(max-width:1100px){
@@ -220,12 +230,16 @@
         </div>
       </div>
       
-      <div class="summary-card soft-cyan">
-        <div class="big-icon icon-cyan"><i class="fa-regular fa-sticky-note"></i></div>
+      <div class="summary-card soft-cyan" style="padding: 22px;">
         <div style="width: 100%;">
-          <p>Catatan</p>
-          <textarea class="note-textarea" placeholder="Tulis catatan sementara di sini..." oninput="autoSaveCatatan()"></textarea>
-          <span id="saveStatus" class="save-status">Terbaca dari Supabase</span>
+          <p><i class="fa-regular fa-comment-dots" style="color: var(--cyan); margin-right: 6px;"></i>Catatan Brangkas</p>
+          <textarea class="note-textarea" placeholder="Tulis catatan penting di sini (Otomatis tersimpan)..." oninput="autoSaveCatatan()"></textarea>
+          <div class="save-badge-container">
+            <span id="saveStatusBadge" class="save-status-badge">
+              <i id="saveStatusIcon" class="fa-solid fa-cloud"></i>
+              <span id="saveStatusText">Memuat dari Supabase...</span>
+            </span>
+          </div>
         </div>
       </div>
     </section>
@@ -410,15 +424,24 @@
         saldoAwal = settingData ? Number(settingData.saldo_awal) : 0;
         
         // Memuat catatan dari Supabase ke dalam textarea
+        const statusText = document.getElementById('saveStatusText');
+        const statusIcon = document.getElementById('saveStatusIcon');
+        const badgeBox = document.getElementById('saveStatusBadge');
+
         if (settingData && settingData.catatan) {
           document.querySelector('.note-textarea').value = settingData.catatan;
         }
+        
+        statusText.textContent = "Catatan Sinkron";
+        statusIcon.className = "fa-solid fa-cloud-arrow-up";
+        badgeBox.style.background = "#dcfce7";
+        badgeBox.style.color = "#16a34a";
+        badgeBox.style.borderColor = "#bbf7d0";
 
         const { data: trxData, error: trxError } = await supabaseClient
           .from('brangkas_transaksi')
           .select('*')
           .order('created_at', { ascending:true });
-      
 
         if(trxError) throw trxError;
 
@@ -433,12 +456,18 @@
       }
     }
 
-    // Fungsi simpan otomatis untuk Catatan ke Supabase
+    // Fungsi autosave dengan indikator card kecil icon cloud/save yang fix terhubung ke Supabase
     function autoSaveCatatan() {
       const text = document.querySelector('.note-textarea').value;
-      const statusEl = document.getElementById('saveStatus');
-      statusEl.textContent = "Sedang mengetik...";
-      statusEl.style.color = "var(--purple)";
+      const statusText = document.getElementById('saveStatusText');
+      const statusIcon = document.getElementById('saveStatusIcon');
+      const badgeBox = document.getElementById('saveStatusBadge');
+
+      statusText.textContent = "Mengetik...";
+      statusIcon.className = "fa-solid fa-circle-notch fa-spin";
+      badgeBox.style.background = "#fffbeb";
+      badgeBox.style.color = "#d97706";
+      badgeBox.style.borderColor = "#fef3c7";
 
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(async () => {
@@ -448,14 +477,20 @@
             .upsert({ id: 1, catatan: text, updated_at: new Date().toISOString() });
 
           if (error) throw error;
-          statusEl.textContent = "Otomatis tersimpan di Supabase";
-          statusEl.style.color = "var(--green)";
+          statusText.textContent = "Tersimpan";
+          statusIcon.className = "fa-solid fa-floppy-disk";
+          badgeBox.style.background = "#ecfdf5";
+          badgeBox.style.color = "#059669";
+          badgeBox.style.borderColor = "#a7f3d0";
         } catch (err) {
-          statusEl.textContent = "Gagal menyimpan ke DB!";
-          statusEl.style.color = "var(--red)";
+          statusText.textContent = "Gagal simpan!";
+          statusIcon.className = "fa-solid fa-circle-exclamation";
+          badgeBox.style.background = "#fff1f2";
+          badgeBox.style.color = "#e11d48";
+          badgeBox.style.borderColor = "#fecdd3";
           console.error(err);
         }
-      }, 1500); // Menyimpan otomatis 1.5 detik setelah berhenti mengetik
+      }, 1200); 
     }
 
     async function simpanSaldoAwal(){
@@ -841,7 +876,7 @@
           .from('brangkas_audit_laci')
           .insert({
             uang_sistem:sistem,
-            uang_fisik:fisik,
+            uang_fisik: fisik,
             selisih:selisih,
             status:status,
             keterangan:keterangan || '-'
