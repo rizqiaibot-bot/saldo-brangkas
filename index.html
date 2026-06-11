@@ -42,7 +42,7 @@
     .clock{margin-top:9px;font-size:16px;font-weight:600;opacity:.92;display:flex;align-items:center;justify-content:center;gap:8px;}
     .db-status{margin-top:9px;font-size:13px;font-weight:700;color:#bbf7d0;}
 
-    .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:18px;}
+    .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:18px;}
     .summary-card{min-height:106px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;display:flex;align-items:center;gap:18px;}
     .summary-card.soft-blue{background:linear-gradient(135deg,#ffffff,#eff6ff);}
     .summary-card.soft-green{background:linear-gradient(135deg,#ffffff,#ecfdf5);}
@@ -55,6 +55,8 @@
     .icon-purple{background:#ede9fe;color:var(--purple);}
     .summary-card.soft-orange{background:linear-gradient(135deg,#ffffff,#fffbeb);}
     .icon-orange{background:#fef3c7;color:#f59e0b;}
+    .summary-card.soft-cyan{background:linear-gradient(135deg,#ffffff,#ecfeff);}
+    .icon-cyan{background:#cffafe;color:var(--cyan);}
     
     .status-pill{display:inline-flex;margin-top:4px;padding:6px 10px;border-radius:999px;font-size:11px;font-weight:800;color:#fff;}
     .status-ok{background:#16a34a;}
@@ -126,6 +128,19 @@
     .note{margin-top:14px;background:#eff6ff;border:1px solid #bfdbfe;color:#475569;padding:12px 14px;border-radius:10px;font-size:13px;}
     .note i{color:#2563eb;margin-right:6px;}
 
+    /* Custom Style untuk Input Catatan agar pas di dalam card */
+    .note-textarea {
+      width: 100%;
+      height: 60px;
+      min-height: 60px;
+      font-size: 13px;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 0;
+      resize: none;
+      border-radius: 8px;
+    }
+
     @media(max-width:1100px){
       .summary{grid-template-columns:repeat(2,1fr);}
       .main-grid{grid-template-columns:1fr;}
@@ -183,6 +198,13 @@
           <input id="modalLaciInput" type="number" placeholder="Ubah modal laci">
           <button class="btn btn-orange" onclick="ubahModalLaci()">Simpan Modal Laci</button>
           <span id="modalStatusText" class="status-pill status-empty">Belum Ada Closing</span>
+        </div>
+      </div>
+      <div class="summary-card soft-cyan">
+        <div class="big-icon icon-cyan"><i class="fa-regular fa-sticky-note"></i></div>
+        <div style="width: 100%;">
+          <p>Catatan</p>
+          <textarea class="note-textarea" placeholder="Tulis catatan sementara di sini..."></textarea>
         </div>
       </div>
     </section>
@@ -523,7 +545,6 @@
         indexAsli: index
       }));
 
-      // DI SINI ADALAH PERUBAHANNYA: Diubah dari slice(-30) menjadi slice(-50)
       if(!dari && !sampai && jenisFilter === 'SEMUA'){
         dataTampil = dataTampil.slice(-100).reverse();
       } else {
