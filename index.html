@@ -296,17 +296,6 @@
       </div>
     </section>
 
-    <div class="panel" style="margin-bottom: 18px;">
-      <div class="panel-title"><span class="small-icon icon-orange"><i class="fa-solid fa-scale-balanced"></i></span>AUDIT KESESUAIAN BRANGKAS</div>
-      <div class="hint">Isi uang sistem dan uang fisik. Selisih hanya sebagai catatan audit, tidak mempengaruhi saldo brangkas.</div>
-      <label>Uang Menurut Sistem</label>
-      <input id="auditSistem" type="number" placeholder="Contoh: 2300000">
-      <label>Uang Fisik di Brangkas</label>
-      <input id="auditFisik" type="number" placeholder="Contoh: 2275000">
-      <label>Keterangan</label>
-      <textarea id="auditKet" placeholder="Contoh: selisih kemungkinan salah kembalian"></textarea>
-      <button class="btn btn-orange" onclick="simpanAuditLaci()"><i class="fa-solid fa-floppy-disk"></i> Simpan Audit Brangkas</button>
-    </div>
 
     <section class="filter-panel">
       <div class="filter-title"><i class="fa-solid fa-filter"></i> Filter & Pencarian</div>
@@ -857,49 +846,6 @@
       renderData();
     }
 
-    async function simpanAuditLaci(){
-      const sistem = Number(document.getElementById('auditSistem').value);
-      const fisik = Number(document.getElementById('auditFisik').value);
-      const keterangan = document.getElementById('auditKet').value.trim();
-
-      if(!sistem || ! fisik){
-        alert('Isi uang sistem & uang fisik.');
-        return;
-      }
-
-      const selisih = fisik - sistem;
-      let status = 'COCOK';
-
-      if(selisih > 0) status = 'PLUS';
-      else if(selisih < 0) status = 'MINUS';
-
-      try{
-        const { error } = await supabaseClient
-          .from('brangkas_audit_laci')
-          .insert({
-            uang_sistem:sistem,
-            uang_fisik: fisik,
-            selisih:selisih,
-            status:status,
-            keterangan:keterangan || '-'
-          });
-
-        if(error) throw error;
-
-        let pesan = '';
-        if(status === 'PLUS') pesan = `Audit selesai.\nSelisih PLUS Rp ${Math.abs(selisih).toLocaleString('id-ID')}`;
-        if(status === 'MINUS') pesan = `Audit selesai.\nSelisih MINUS Rp ${Math.abs(selisih).toLocaleString('id-ID')}`;
-        if(status === 'COCOK') pesan = 'Audit selesai.\nUang fisik cocok dengan sistem.';
-
-        alert(pesan);
-        document.getElementById('auditSistem').value = '';
-        document.getElementById('auditFisik').value = '';
-        document.getElementById('auditKet').value = '';
-
-      }catch(error){
-        alert('Gagal simpan audit: ' + error.message);
-      }
-    }
 
     function ubahModalLaci(){
       const nominal = Number(document.getElementById('modalLaciInput').value);
