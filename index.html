@@ -253,11 +253,6 @@
         <button class="btn btn-orange" onclick="closingLaciKasir()"><i class="fa-solid fa-vault"></i> Closing: Masukkan Sisa ke Brangkas</button>
       </div>
 
-      <div class="panel">
-        <div class="panel-title"><span class="small-icon icon-green"><i class="fa-solid fa-coins"></i></span>Tarik Modal Laci ke Brangkas</div>
-        <div class="hint">Klik saat modal laci <span class="modalLaciText">Rp 500.000</span> sudah dikembalikan ke brangkas.</div>
-        <button class="btn btn-green" onclick="tarikModalKeBrangkas()"><i class="fa-solid fa-circle-check"></i> Tandai Sudah Dikembalikan</button>
-      </div>
     </section>
 
     <section class="main-grid">
@@ -797,47 +792,6 @@
       }
     }
 
-    async function tarikModalKeBrangkas(){
-      const w = waktuJakarta();
-
-      if(modalHariIni && modalHariIni.status === 'SUDAH_DIKEMBALIKAN'){
-        alert('Modal laci hari ini sudah dikembalikan.');
-        return;
-      }
-
-      if(!confirm(`Tarik modal laci ${formatRupiah(MODAL_LACI)} ke brangkas?`)) return;
-
-      try{
-        const { error: trxError } = await supabaseClient
-          .from('brangkas_transaksi')
-          .insert({
-            tanggal:w.tanggal,
-            jam:w.jam,
-            jenis:'MASUK',
-            nominal:MODAL_LACI,
-            keterangan:'Tarik modal laci kasir ke brangkas',
-            pengambil:'Sistem'
-          });
-
-        if(trxError) throw trxError;
-
-        const { error: modalError } = await supabaseClient
-          .from('brangkas_modal_laci')
-          .upsert({
-            tanggal_modal:w.tanggal,
-            nominal_modal:MODAL_LACI,
-            status:'SUDAH_DIKEMBALIKAN',
-            returned_at:new Date().toISOString()
-          }, { onConflict:'tanggal_modal' });
-
-        if(modalError) throw modalError;
-
-        await loadData();
-
-      }catch(error){
-        alert('Gagal tarik modal: ' + error.message);
-      }
-    }
 
     function resetFilter(){
       document.getElementById('filterDari').value = '';
