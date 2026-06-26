@@ -68,8 +68,12 @@
     .status-wait{background:#f59e0b;}
     .status-empty{background:#64748b;}
 
-    .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px;}
-    .hint{font-size:13px;color:#64748b;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.45;}
+    .btn-group-toggle{display:flex;gap:0;margin-bottom:14px;}
+    .btn-group-toggle .btn-toggle{flex:1;border-radius:0;height:38px;font-size:13px;cursor:pointer;border:1px solid #cfd8e3;background:#fff;color:#64748b;font-weight:700;transition:.15s;}
+    .btn-group-toggle .btn-toggle:first-child{border-radius:10px 0 0 10px;}
+    .btn-group-toggle .btn-toggle:last-child{border-radius:0 10px 10px 0;}
+    .btn-group-toggle .btn-toggle.active-operasional{background:linear-gradient(135deg,#f43f5e,#fb7185);color:#fff;border-color:transparent;}
+    .btn-group-toggle .btn-toggle.active-kasbon{background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;border-color:transparent;}
     .summary-card p{font-size:14px;font-weight:700;color:#334155;margin-bottom:8px;}
     .summary-card h2{font-size:22px;line-height:1.15;font-weight:800;white-space:normal;}
 
@@ -124,6 +128,7 @@
     .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;}
     .badge-masuk{background:#16a34a;}
     .badge-keluar{background:#f43f5e;}
+    .badge-kasbon{background:#1e293b;}
     .actions{display:flex;gap:8px;}
     .mini-btn{border:none;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;}
     .cek-ok{background:#dcfce7;color:#16a34a;}
@@ -250,7 +255,11 @@
       </div>
 
       <div class="panel">
-        <div class="panel-title"><span class="small-icon icon-red"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>Uang Keluar Operasional</div>
+        <div class="panel-title"><span class="small-icon icon-red"><i class="fa-solid fa-arrow-up-from-bracket"></i></span>Uang Keluar</div>
+        <div class="btn-group-toggle">
+          <button class="btn-toggle active-operasional" id="btnOperasional" onclick="pilihJenisKeluar('KELUAR')">Operasional</button>
+          <button class="btn-toggle" id="btnKasbon" onclick="pilihJenisKeluar('KASBON')">Kasbon</button>
+        </div>
         <label>Nominal Keluar</label>
         <input id="nominalKeluar" type="number" placeholder="Contoh: 50000">
         <label>Keterangan</label>
@@ -264,7 +273,7 @@
           <option value="Kasir Rifki">Kasir Rifki</option>
           <option value="Kasir Inan">Kasir Inan</option>
         </select>
-        <button class="btn btn-red" onclick="tambahKeluar()"><i class="fa-solid fa-circle-plus"></i> Tambah Uang Keluar</button>
+        <button class="btn btn-red" id="btnSubmitKeluar" onclick="tambahKeluar()"><i class="fa-solid fa-circle-plus"></i> Tambah Uang Keluar</button>
       </div>
     </section>
 
@@ -286,6 +295,7 @@
             <option value="SEMUA">Semua Jenis</option>
             <option value="MASUK">MASUK</option>
             <option value="KELUAR">KELUAR</option>
+            <option value="KASBON">KASBON</option>
           </select>
         </div>
         <button class="btn btn-cyan" onclick="renderData()"><i class="fa-solid fa-filter"></i> Terapkan Filter</button>
@@ -321,6 +331,7 @@
     let saldoAwal = 0;
     let transaksi = [];
     let saveTimeout = null;
+    let jenisKeluar = 'KELUAR';
 
     function setStatus(text, ok = true){
       const el = document.getElementById('dbStatus');
@@ -479,6 +490,27 @@
       }
     }
 
+    function pilihJenisKeluar(jenis){
+      jenisKeluar = jenis;
+      const btnOp = document.getElementById('btnOperasional');
+      const btnKb = document.getElementById('btnKasbon');
+      const btnSubmit = document.getElementById('btnSubmitKeluar');
+      if(jenis === 'KELUAR'){
+        btnOp.className = 'btn-toggle active-operasional';
+        btnKb.className = 'btn-toggle';
+        btnSubmit.className = 'btn btn-red';
+        btnSubmit.innerHTML = '<i class="fa-solid fa-circle-plus"></i> Tambah Uang Keluar';
+        document.getElementById('ketKeluar').placeholder = 'Contoh: Beli plastik, bensin, parkir, dll';
+      } else {
+        btnOp.className = 'btn-toggle';
+        btnKb.className = 'btn-toggle active-kasbon';
+        btnSubmit.className = 'btn btn-red';
+        btnSubmit.style.background = 'linear-gradient(135deg,#1e293b,#0f172a)';
+        btnSubmit.innerHTML = '<i class="fa-solid fa-circle-plus"></i> Tambah Kasbon';
+        document.getElementById('ketKeluar').placeholder = 'Contoh: Kasbon bayar sekolah, dll';
+      }
+    }
+
     async function tambahMasuk(){
       const nominal = Number(document.getElementById('nominalMasuk').value);
       const keterangan = document.getElementById('ketMasuk').value.trim();
@@ -536,7 +568,7 @@
           .insert({
             tanggal:w.tanggal,
             jam:w.jam,
-            jenis:'KELUAR',
+            jenis:jenisKeluar,
             nominal,
             keterangan:keterangan || '-',
             pengambil:pengambil || '-'
@@ -558,7 +590,7 @@
       let saldo = saldoAwal;
       for(let i = 0; i <= indexAkhir; i++){
         if(transaksi[i].jenis === 'MASUK') saldo += Number(transaksi[i].nominal);
-        if(transaksi[i].jenis === 'KELUAR') saldo -= Number(transaksi[i].nominal);
+        if(transaksi[i].jenis === 'KELUAR' || transaksi[i].jenis === 'KASBON') saldo -= Number(transaksi[i].nominal);
       }
       return saldo;
     }
@@ -576,7 +608,7 @@
 
       transaksi.forEach(t => {
         if(t.jenis === 'MASUK') totalMasuk += Number(t.nominal);
-        if(t.jenis === 'KELUAR') totalKeluar += Number(t.nominal);
+        if(t.jenis === 'KELUAR' || t.jenis === 'KASBON') totalKeluar += Number(t.nominal);
       });
 
       const sisaSaldo = saldoAwal + totalMasuk - totalKeluar;
@@ -605,7 +637,10 @@
         if(jenisFilter !== 'SEMUA' && t.jenis !== jenisFilter) return;
 
         const saldoSetelah = hitungSaldoSampai(t.indexAsli);
-        const badgeClass = t.jenis === 'MASUK' ? 'badge-masuk' : 'badge-keluar';
+        let badgeClass;
+        if(t.jenis === 'MASUK') badgeClass = 'badge-masuk';
+        else if(t.jenis === 'KASBON') badgeClass = 'badge-kasbon';
+        else badgeClass = 'badge-keluar';
 
         tbody.innerHTML += `
           <tr>
@@ -650,7 +685,7 @@
       if(ketBaru === null) return;
 
       let pengambilBaru = t.pengambil;
-      if(t.jenis === 'KELUAR'){
+      if(t.jenis === 'KELUAR' || t.jenis === 'KASBON'){
         pengambilBaru = prompt('Edit nama pengambil/user:', t.pengambil);
         if(pengambilBaru === null) return;
       }
