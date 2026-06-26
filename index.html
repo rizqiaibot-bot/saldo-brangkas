@@ -244,16 +244,6 @@
       </div>
     </section>
 
-    <section class="modal-grid">
-      <div class="panel">
-        <div class="panel-title"><span class="small-icon icon-orange"><i class="fa-solid fa-moon"></i></span>Closing Malam Laci Kasir</div>
-        <div class="hint">Masukkan total uang di laci kasir. Sistem otomatis menyisakan modal <span class="modalLaciText">Rp 500.000</span>, sisanya masuk brangkas.</div>
-        <label>Total Uang di Laci Kasir</label>
-        <input id="totalLaciClosing" type="number" placeholder="Contoh: 2300000">
-        <button class="btn btn-orange" onclick="closingLaciKasir()"><i class="fa-solid fa-vault"></i> Closing: Masukkan Sisa ke Brangkas</button>
-      </div>
-
-    </section>
 
     <section class="main-grid">
       <div class="panel">
@@ -727,72 +717,8 @@
       }
     }
 
-    function tanggalBesokJakarta(){
-      const now = new Date();
-      const besok = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-      return new Intl.DateTimeFormat('en-CA', {
-        timeZone:'Asia/Jakarta',
-        year:'numeric',
-        month:'2-digit',
-        day:'2-digit'
-      }).format(besok);
-    }
-
-    async function closingLaciKasir(){
-      const totalLaci = Number(document.getElementById('totalLaciClosing').value);
-
-      if(!totalLaci || totalLaci <= 0){
-        alert('Isi total uang laci kasir dengan benar.');
-        return;
-      }
-
-      if(totalLaci < MODAL_LACI){
-        alert('Total uang laci kurang dari modal wajib ' + formatRupiah(MODAL_LACI));
-        return;
-      }
-
-      const masukBrangkas = totalLaci - MODAL_LACI;
-      const w = waktuJakarta();
-      const tanggalModal = tanggalBesokJakarta();
-
-      if(!confirm(`Closing laci kasir?\n\nTotal laci: ${formatRupiah(totalLaci)}\nDisisakan modal besok: ${formatRupiah(MODAL_LACI)}\nMasuk brangkas: ${formatRupiah(masukBrangkas)}`)) return;
-
-      try{
-        const { error: trxError } = await supabaseClient
-          .from('brangkas_transaksi')
-          .insert({
-            tanggal:w.tanggal,
-            jam:w.jam,
-            jenis:'MASUK',
-            nominal:masukBrangkas,
-            keterangan:`Closing laci kasir. Total laci ${formatRupiah(totalLaci)}. Disisakan modal ${formatRupiah(MODAL_LACI)}.`,
-            pengambil:'Sistem'
-          });
-
-        if(trxError) throw trxError;
-
-        const { error: modalError } = await supabaseClient
-          .from('brangkas_modal_laci')
-          .upsert({
-            tanggal_modal:tanggalModal,
-            nominal_modal:MODAL_LACI,
-            status:'BELUM_DIKEMBALIKAN',
-            closing_at:new Date().toISOString(),
-            returned_at:null
-          }, { onConflict:'tanggal_modal' });
-
-        if(modalError) throw modalError;
-
-        document.getElementById('totalLaciClosing').value = '';
-        await loadData();
-
-      }catch(error){
-        alert('Gagal closing laci kasir: ' + error.message);
-      }
-    }
-
-
+    
     function resetFilter(){
       document.getElementById('filterDari').value = '';
       document.getElementById('filterSampai').value = '';
