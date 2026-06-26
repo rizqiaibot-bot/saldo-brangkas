@@ -128,7 +128,6 @@
     .badge{display:inline-flex;align-items:center;justify-content:center;padding:6px 12px;border-radius:999px;font-size:12px;font-weight:800;color:#fff;}
     .badge-masuk{background:#16a34a;}
     .badge-keluar{background:#f43f5e;}
-    .badge-kasbon{background:#1e293b;}
     .actions{display:flex;gap:8px;}
     .mini-btn{border:none;border-radius:9px;padding:8px 10px;font-size:12px;font-weight:800;cursor:pointer;}
     .cek-ok{background:#dcfce7;color:#16a34a;}
@@ -295,7 +294,6 @@
             <option value="SEMUA">Semua Jenis</option>
             <option value="MASUK">MASUK</option>
             <option value="KELUAR">KELUAR</option>
-            <option value="KASBON">KASBON</option>
           </select>
         </div>
         <button class="btn btn-cyan" onclick="renderData()"><i class="fa-solid fa-filter"></i> Terapkan Filter</button>
@@ -568,7 +566,7 @@
           .insert({
             tanggal:w.tanggal,
             jam:w.jam,
-            jenis:jenisKeluar,
+            jenis:'KELUAR',
             nominal,
             keterangan:keterangan || '-',
             pengambil:pengambil || '-'
@@ -590,7 +588,7 @@
       let saldo = saldoAwal;
       for(let i = 0; i <= indexAkhir; i++){
         if(transaksi[i].jenis === 'MASUK') saldo += Number(transaksi[i].nominal);
-        if(transaksi[i].jenis === 'KELUAR' || transaksi[i].jenis === 'KASBON') saldo -= Number(transaksi[i].nominal);
+        if(transaksi[i].jenis === 'KELUAR') saldo -= Number(transaksi[i].nominal);
       }
       return saldo;
     }
@@ -608,7 +606,7 @@
 
       transaksi.forEach(t => {
         if(t.jenis === 'MASUK') totalMasuk += Number(t.nominal);
-        if(t.jenis === 'KELUAR' || t.jenis === 'KASBON') totalKeluar += Number(t.nominal);
+        if(t.jenis === 'KELUAR') totalKeluar += Number(t.nominal);
       });
 
       const sisaSaldo = saldoAwal + totalMasuk - totalKeluar;
@@ -637,10 +635,7 @@
         if(jenisFilter !== 'SEMUA' && t.jenis !== jenisFilter) return;
 
         const saldoSetelah = hitungSaldoSampai(t.indexAsli);
-        let badgeClass;
-        if(t.jenis === 'MASUK') badgeClass = 'badge-masuk';
-        else if(t.jenis === 'KASBON') badgeClass = 'badge-kasbon';
-        else badgeClass = 'badge-keluar';
+        const badgeClass = t.jenis === 'MASUK' ? 'badge-masuk' : 'badge-keluar';
 
         tbody.innerHTML += `
           <tr>
@@ -685,7 +680,7 @@
       if(ketBaru === null) return;
 
       let pengambilBaru = t.pengambil;
-      if(t.jenis === 'KELUAR' || t.jenis === 'KASBON'){
+      if(t.jenis === 'KELUAR'){
         pengambilBaru = prompt('Edit nama pengambil/user:', t.pengambil);
         if(pengambilBaru === null) return;
       }
