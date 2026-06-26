@@ -217,19 +217,6 @@
     </section>
 
     <section class="modal-notes-row">
-      <div class="summary-card soft-orange">
-        <div class="big-icon icon-orange"><i class="fa-solid fa-coins"></i></div>
-        <div style="width: 100%;">
-          <p>Modal Laci Hari Ini</p>
-          <h2 id="modalNominalText" style="color:#f59e0b; margin-bottom: 8px;">Rp 500.000</h2>
-          <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <input id="modalLaciInput" type="number" placeholder="Ubah modal laci" style="margin-bottom:0; flex:1;">
-            <button class="btn btn-orange" onclick="ubahModalLaci()" style="width:auto; white-space:nowrap;">Simpan</button>
-          </div>
-          <span id="modalStatusText" class="status-pill status-empty">Belum Ada Closing</span>
-        </div>
-      </div>
-      
       <div class="summary-card soft-cyan" style="padding: 22px;">
         <div style="width: 100%;">
           <p><i class="fa-regular fa-comment-dots" style="color: var(--cyan); margin-right: 6px;"></i>Catatan Brangkas</p>
@@ -333,8 +320,6 @@
 
     let saldoAwal = 0;
     let transaksi = [];
-    let MODAL_LACI = 500000;
-    let modalHariIni = null;
     let saveTimeout = null;
 
     function setStatus(text, ok = true){
@@ -726,24 +711,6 @@
       renderData();
     }
 
-
-    function ubahModalLaci(){
-      const nominal = Number(document.getElementById('modalLaciInput').value);
-
-      if(!nominal || nominal <= 0){
-        alert('Isi nominal modal laci dengan benar');
-        return;
-      }
-
-      MODAL_LACI = nominal;
-      document.getElementById('modalNominalText').textContent = formatRupiah(MODAL_LACI);
-      document.querySelectorAll('.modalLaciText').forEach(el => {
-        el.textContent = formatRupiah(MODAL_LACI);
-      });
-
-      document.getElementById('modalLaciInput').value = '';
-      alert('Modal laci berhasil diubah menjadi ' + formatRupiah(MODAL_LACI));
-    }
 
     async function hapusSemuaData(){
       if(!confirm('PERINGATAN! Anda akan menghapus semua data transaksi. Yakin?')) return;
