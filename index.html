@@ -413,7 +413,8 @@
         const { data: trxData, error: trxError } = await supabaseClient
           .from('brangkas_transaksi')
           .select('*')
-          .order('created_at', { ascending:true });
+          .order('tanggal', { ascending:true })
+          .order('jam', { ascending:true });
 
         if(trxError) throw trxError;
 
