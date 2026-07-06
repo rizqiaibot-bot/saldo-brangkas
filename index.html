@@ -617,7 +617,7 @@
 
       document.getElementById('saldoAwalText').textContent = formatRupiah(saldoAwal);
       document.getElementById('totalMasukText').textContent = formatRupiah(totalMasuk);
-      document.getElementById('totalKeluarText').textContent = formatRupiah(totalKeluar);
+      document.getElementById('totalKeluarText').textContent = formatRupiah(Math.abs(totalKeluar));
       document.getElementById('sisaSaldoText').textContent = formatRupiah(sisaSaldo);
 
       let nomor = 1;
