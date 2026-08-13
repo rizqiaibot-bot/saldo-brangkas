@@ -195,11 +195,25 @@
 </head>
 
 <body>
-  <div class="app">
-    <header class="header">
+  <div id="loginOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#070b17,#101827);display:flex;align-items:center;justify-content:center;z-index:999;">
+    <div style="background:#fff;border-radius:18px;padding:34px;width:min(380px,92%);box-shadow:0 20px 50px rgba(0,0,0,.4);">
+      <h2 style="margin:0 0 4px;font-weight:800;color:#0f172a;"><i class="fa-solid fa-vault"></i> SALDO BRANGKAS</h2>
+      <p style="color:#64748b;margin:0 0 20px;font-size:14px;">Masuk untuk mengelola data</p>
+      <label>Email</label>
+      <input id="loginEmail" type="email" placeholder="email@example.com" autocomplete="email">
+      <label>Password</label>
+      <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+      <div id="loginError" style="color:#f43f5e;font-size:13px;margin:0 0 12px;min-height:18px;font-weight:600;"></div>
+      <button class="btn btn-blue" onclick="login()" style="margin-bottom:0;"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+    </div>
+  </div>
+
+  <div class="app" style="display:none">
+    <header class="header" style="position:relative;">
       <h1><i class="fa-solid fa-vault"></i> SALDO BRANGKAS</h1>
       <div class="clock"><i class="fa-regular fa-clock"></i><span id="liveClock">Memuat waktu...</span></div>
       <div class="db-status" id="dbStatus">Supabase: menghubungkan...</div>
+      <button onclick="logout()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
     </header>
 
     <section class="summary">
@@ -324,7 +338,7 @@
 
   <script>
     const SUPABASE_URL = "https://dsryxvelpbuitjmnswxc.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzcnl4dmVscGJ1aXRqbW5zd3hjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA2NDcwODAsImV4cCI6MjA5NjIyMzA4MH0.3P8p3oZZ1WBaulyD6Adq0uE4gVKsJr2OimXR784El9o";
+    const SUPABASE_ANON_KEY = "sb_publishable_oc4vBssr6xcYb32msMjPKQ_qgCgpEM4";
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -760,7 +774,54 @@
       }
     }
 
-    loadData();
+    // ===== AUTH =====
+    let currentUser = null;
+
+    function showLogin(msg){
+      document.getElementById('loginOverlay').style.display = 'flex';
+      document.querySelector('.app').style.display = 'none';
+      if(msg) document.getElementById('loginError').textContent = msg;
+    }
+
+    function showApp(){
+      document.getElementById('loginOverlay').style.display = 'none';
+      document.querySelector('.app').style.display = 'block';
+    }
+
+    async function login(){
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      const errEl = document.getElementById('loginError');
+      errEl.textContent = '';
+      if(!email || !password){ errEl.textContent = 'Isi email dan password.'; return; }
+      try{
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if(error){ errEl.textContent = 'Login gagal: ' + error.message; return; }
+        document.getElementById('loginPassword').value = '';
+        await init();
+      }catch(e){
+        errEl.textContent = 'Login gagal: ' + e.message;
+      }
+    }
+
+    async function logout(){
+      await supabaseClient.auth.signOut();
+      document.getElementById('loginPassword').value = '';
+      showLogin(null);
+    }
+
+    async function init(){
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if(!session){ showLogin(null); return; }
+      const user = session.user;
+      const { data: allowed, error } = await supabaseClient.rpc('is_brangkas_user', { uid: user.id });
+      if(error || !allowed){ showLogin('Anda tidak memiliki akses ke Saldo Brankas.'); return; }
+      currentUser = user;
+      showApp();
+      await loadData();
+    }
+
+    init();
   </script>
 </body>
 </html>
