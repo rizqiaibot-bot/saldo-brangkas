@@ -1,0 +1,22 @@
+[Unit]
+Description=Saldo Brangkas API (backend pengganti Supabase)
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=juwita
+Group=juwita
+WorkingDirectory=/home/juwita/saldo-brangkas
+EnvironmentFile=/home/juwita/saldo-brangkas/.env
+ExecStart=/usr/bin/python3 /home/juwita/saldo-brangkas/backend/app.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+ReadWritePaths=/home/juwita/saldo-brangkas
+
+[Install]
+WantedBy=multi-user.target

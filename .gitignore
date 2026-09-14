@@ -1,0 +1,5 @@
+.env
+.env.*
+!.env.example
+.owner-password.txt
+saldo-brangkas-supabase-backup.sql

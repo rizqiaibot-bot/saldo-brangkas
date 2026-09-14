@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SALDO BRANGKAS - SUPABASE</title>
+  <title>SALDO BRANGKAS</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root{
@@ -195,25 +194,11 @@
 </head>
 
 <body>
-  <div id="loginOverlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#070b17,#101827);display:flex;align-items:center;justify-content:center;z-index:999;">
-    <div style="background:#fff;border-radius:18px;padding:34px;width:min(380px,92%);box-shadow:0 20px 50px rgba(0,0,0,.4);">
-      <h2 style="margin:0 0 4px;font-weight:800;color:#0f172a;"><i class="fa-solid fa-vault"></i> SALDO BRANGKAS</h2>
-      <p style="color:#64748b;margin:0 0 20px;font-size:14px;">Masuk untuk mengelola data</p>
-      <label>Email</label>
-      <input id="loginEmail" type="email" placeholder="email@example.com" autocomplete="email">
-      <label>Password</label>
-      <input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
-      <div id="loginError" style="color:#f43f5e;font-size:13px;margin:0 0 12px;min-height:18px;font-weight:600;"></div>
-      <button class="btn btn-blue" onclick="login()" style="margin-bottom:0;"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
-    </div>
-  </div>
-
-  <div class="app" style="display:none">
+  <div class="app">
     <header class="header" style="position:relative;">
       <h1><i class="fa-solid fa-vault"></i> SALDO BRANGKAS</h1>
       <div class="clock"><i class="fa-regular fa-clock"></i><span id="liveClock">Memuat waktu...</span></div>
-      <div class="db-status" id="dbStatus">Supabase: menghubungkan...</div>
-      <button onclick="logout()" style="position:absolute;top:16px;right:16px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:8px 14px;font-weight:700;font-size:13px;cursor:pointer;"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+      <div class="db-status" id="dbStatus">Database VPS: menghubungkan...</div>
     </header>
 
     <section class="summary">
@@ -243,7 +228,7 @@
           <div class="save-badge-container">
             <span id="saveStatusBadge" class="save-status-badge">
               <i id="saveStatusIcon" class="fa-solid fa-cloud"></i>
-              <span id="saveStatusText">Memuat dari Supabase...</span>
+              <span id="saveStatusText">Memuat dari database...</span>
             </span>
           </div>
         </div>
@@ -332,15 +317,21 @@
     <button class="btn btn-danger-outline" onclick="hapusSemuaData()"><i class="fa-regular fa-trash-can"></i> Hapus Semua Data</button>
 
     <div class="note">
-      <i class="fa-solid fa-circle-info"></i> Data sekarang tersimpan di Supabase. Kalau browser ditutup atau ganti perangkat, data tetap aman selama Supabase aktif.
+      <i class="fa-solid fa-circle-info"></i> Data sekarang tersimpan di database VPS. Kalau browser ditutup atau ganti perangkat, data tetap aman.
     </div>
   </div>
 
   <script>
-    const SUPABASE_URL = "https://dsryxvelpbuitjmnswxc.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_oc4vBssr6xcYb32msMjPKQ_qgCgpEM4";
-
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // API backend VPS (menggantikan Supabase PostgREST + Auth)
+    async function api(path, options){
+      const opts = Object.assign({ headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin' }, options || {});
+      if (opts.body && typeof opts.body !== 'string') opts.body = JSON.stringify(opts.body);
+      const res = await fetch('/api' + path, opts);
+      let data = null;
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
+      return data;
+    }
 
     let saldoAwal = 0;
     let transaksi = [];
@@ -391,25 +382,13 @@
 
     async function loadData(){
       try{
-        if(SUPABASE_URL.includes('ISI_DENGAN') || SUPABASE_ANON_KEY.includes('ISI_DENGAN')){
-          setStatus('Supabase belum disetting: isi URL and ANON KEY dulu.', false);
-          renderData();
-          return;
-        }
+        setStatus('Database VPS: mengambil data...');
 
-        setStatus('Supabase: mengambil data...');
-
-        const { data: settingData, error: settingError } = await supabaseClient
-          .from('brangkas_setting')
-          .select('*')
-          .eq('id', 1)
-          .single();
-
-        if(settingError && settingError.code !== 'PGRST116') throw settingError;
-
+        const data = await api('/data');
+        const settingData = { saldo_awal: data.saldo_awal, catatan: data.catatan };
         saldoAwal = settingData ? Number(settingData.saldo_awal) : 0;
-        
-        // Memuat catatan dari Supabase ke dalam textarea
+
+        // Memuat catatan dari database ke dalam textarea
         const statusText = document.getElementById('saveStatusText');
         const statusIcon = document.getElementById('saveStatusIcon');
         const badgeBox = document.getElementById('saveStatusBadge');
@@ -417,33 +396,25 @@
         if (settingData && settingData.catatan) {
           document.querySelector('.note-textarea').value = settingData.catatan;
         }
-        
+
         statusText.textContent = "Catatan Sinkron";
         statusIcon.className = "fa-solid fa-cloud-arrow-up";
         badgeBox.style.background = "#dcfce7";
         badgeBox.style.color = "#16a34a";
         badgeBox.style.borderColor = "#bbf7d0";
 
-        const { data: trxData, error: trxError } = await supabaseClient
-          .from('brangkas_transaksi')
-          .select('*')
-          .order('tanggal', { ascending:true })
-          .order('jam', { ascending:true });
-
-        if(trxError) throw trxError;
-
-        transaksi = trxData || [];
-        setStatus('Supabase: tersambung dan data aman.');
+        transaksi = data.transaksi || [];
+        setStatus('Database VPS: tersambung dan data aman.');
         renderData();
 
       }catch(error){
         console.error(error);
-        setStatus('Supabase error: cek tabel, URL, ANON KEY, dan RLS policy.', false);
-        alert('Gagal mengambil data Supabase: ' + error.message);
+        setStatus('Database VPS error: cek koneksi backend dan database.', false);
+        alert('Gagal mengambil data: ' + error.message);
       }
     }
 
-    // Fungsi autosave dengan indikator card kecil icon cloud/save yang fix terhubung ke Supabase
+    // Fungsi autosave dengan indikator card kecil icon cloud/save ke backend VPS
     function autoSaveCatatan() {
       const text = document.querySelector('.note-textarea').value;
       const statusText = document.getElementById('saveStatusText');
@@ -459,11 +430,7 @@
       clearTimeout(saveTimeout);
       saveTimeout = setTimeout(async () => {
         try {
-          const { error } = await supabaseClient
-            .from('brangkas_setting')
-            .upsert({ id: 1, catatan: text, updated_at: new Date().toISOString() });
-
-          if (error) throw error;
+          await api('/setting', { method:'PUT', body:{ catatan: text } });
           statusText.textContent = "Tersimpan";
           statusIcon.className = "fa-solid fa-floppy-disk";
           badgeBox.style.background = "#ecfdf5";
@@ -490,11 +457,7 @@
       }
 
       try{
-        const { error } = await supabaseClient
-          .from('brangkas_setting')
-          .upsert({ id:1, saldo_awal:nominal, updated_at:new Date().toISOString() });
-
-        if(error) throw error;
+        await api('/setting', { method:'PUT', body:{ saldo_awal: nominal } });
 
         saldoAwal = nominal;
         input.value = '';
@@ -539,18 +502,14 @@
       const w = waktuJakarta();
 
       try{
-        const { error } = await supabaseClient
-          .from('brangkas_transaksi')
-          .insert({
-            tanggal:w.tanggal,
-            jam:w.jam,
-            jenis:'MASUK',
-            nominal,
-            keterangan:keterangan || '-',
-            pengambil:'-'
-          });
-
-        if(error) throw error;
+        await api('/transaksi', { method:'POST', body:{
+          tanggal:w.tanggal,
+          jam:w.jam,
+          jenis:'MASUK',
+          nominal,
+          keterangan:keterangan || '-',
+          pengambil:'-'
+        }});
 
         document.getElementById('nominalMasuk').value = '';
         document.getElementById('ketMasuk').value = '';
@@ -579,18 +538,14 @@
       const w = waktuJakarta();
 
       try{
-        const { error } = await supabaseClient
-          .from('brangkas_transaksi')
-          .insert({
-            tanggal:w.tanggal,
-            jam:w.jam,
-            jenis:jenisKeluar,
-            nominal,
-            keterangan:keterangan || '-',
-            pengambil:pengambil || '-'
-          });
-
-        if(error) throw error;
+        await api('/transaksi', { method:'POST', body:{
+          tanggal:w.tanggal,
+          jam:w.jam,
+          jenis:jenisKeluar,
+          nominal,
+          keterangan:keterangan || '-',
+          pengambil:pengambil || '-'
+        }});
 
         document.getElementById('nominalKeluar').value = '';
         document.getElementById('ketKeluar').value = '';
@@ -707,16 +662,11 @@
       }
 
       try{
-        const { error } = await supabaseClient
-          .from('brangkas_transaksi')
-          .update({
-            nominal:Number(nominalBaru),
-            keterangan:ketBaru.trim() || '-',
-            pengambil:pengambilBaru.trim() || '-'
-          })
-          .eq('id', id);
-
-        if(error) throw error;
+        await api('/transaksi/' + encodeURIComponent(id), { method:'PUT', body:{
+          nominal:Number(nominalBaru),
+          keterangan:ketBaru.trim() || '-',
+          pengambil:pengambilBaru.trim() || '-'
+        }});
         await loadData();
       }catch(error){
         alert('Gagal edit transaksi: ' + error.message);
@@ -727,12 +677,7 @@
       if(!confirm('Yakin ingin menghapus transaksi ini?')) return;
 
       try{
-        const { error } = await supabaseClient
-          .from('brangkas_transaksi')
-          .delete()
-          .eq('id', id);
-
-        if(error) throw error;
+        await api('/transaksi/' + encodeURIComponent(id), { method:'DELETE' });
         await loadData();
       }catch(error){
         alert('Gagal hapus transaksi: ' + error.message);
@@ -741,12 +686,7 @@
 
     async function toggleDisalin(id, statusSekarang){
       try{
-        const { error } = await supabaseClient
-          .from('brangkas_transaksi')
-          .update({ sudah_disalin: !statusSekarang })
-          .eq('id', id);
-
-        if(error) throw error;
+        await api('/transaksi/' + encodeURIComponent(id) + '/toggle-disalin', { method:'POST', body:{ sudah_disalin: !statusSekarang } });
         await loadData();
       }catch(error){
         alert('Gagal update checklist: ' + error.message);
@@ -766,58 +706,16 @@
     async function hapusSemuaData(){
       if(!confirm('PERINGATAN! Anda akan menghapus semua data transaksi. Yakin?')) return;
       try {
-        const { error } = await supabaseClient.from('brangkas_transaksi').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if(error) throw error;
+        await api('/transaksi', { method:'DELETE', body:{ confirm:'HAPUS_SEMUA' } });
         await loadData();
       } catch(error) {
         alert('Gagal menghapus semua data: ' + error.message);
       }
     }
 
-    // ===== AUTH =====
-    let currentUser = null;
-
-    function showLogin(msg){
-      document.getElementById('loginOverlay').style.display = 'flex';
-      document.querySelector('.app').style.display = 'none';
-      if(msg) document.getElementById('loginError').textContent = msg;
-    }
-
-    function showApp(){
-      document.getElementById('loginOverlay').style.display = 'none';
-      document.querySelector('.app').style.display = 'block';
-    }
-
-    async function login(){
-      const email = document.getElementById('loginEmail').value.trim();
-      const password = document.getElementById('loginPassword').value;
-      const errEl = document.getElementById('loginError');
-      errEl.textContent = '';
-      if(!email || !password){ errEl.textContent = 'Isi email dan password.'; return; }
-      try{
-        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if(error){ errEl.textContent = 'Login gagal: ' + error.message; return; }
-        document.getElementById('loginPassword').value = '';
-        await init();
-      }catch(e){
-        errEl.textContent = 'Login gagal: ' + e.message;
-      }
-    }
-
-    async function logout(){
-      await supabaseClient.auth.signOut();
-      document.getElementById('loginPassword').value = '';
-      showLogin(null);
-    }
-
+    // ===== TANPA AUTENTIKASI =====
+    // Login/password sudah dihapus. Halaman langsung memuat data.
     async function init(){
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if(!session){ showLogin(null); return; }
-      const user = session.user;
-      const { data: allowed, error } = await supabaseClient.rpc('is_brangkas_user', { uid: user.id });
-      if(error || !allowed){ showLogin('Anda tidak memiliki akses ke Saldo Brankas.'); return; }
-      currentUser = user;
-      showApp();
       await loadData();
     }
 
