@@ -574,10 +574,34 @@
       const sampai = document.getElementById('filterSampai').value;
       const jenisFilter = document.getElementById('filterJenis').value;
 
+      const adaFilter = !!(dari || sampai || jenisFilter !== 'SEMUA');
+
+      let nomor = 1;
+
+      let dataTampil = transaksi.map((t, index) => ({
+        ...t,
+        indexAsli: index
+      }));
+
+      if(!adaFilter){
+        dataTampil = dataTampil.slice(-100).reverse();
+      } else {
+        dataTampil = dataTampil.reverse(); 
+      }
+
+      const difilter = dataTampil.filter((t) => {
+        if(dari && t.tanggal < dari) return false;
+        if(sampai && t.tanggal > sampai) return false;
+        if(jenisFilter !== 'SEMUA' && t.jenis !== jenisFilter) return false;
+        return true;
+      });
+
+      const sumberRingkasan = adaFilter ? difilter : transaksi;
+
       let totalMasuk = 0;
       let totalKeluar = 0;
 
-      transaksi.forEach(t => {
+      sumberRingkasan.forEach(t => {
         if(t.jenis === 'MASUK') totalMasuk += Number(t.nominal);
         if(t.jenis === 'KELUAR' || t.jenis === 'KASBON') totalKeluar += Number(t.nominal);
       });
@@ -589,24 +613,7 @@
       document.getElementById('totalKeluarText').textContent = formatRupiah(Math.abs(totalKeluar));
       document.getElementById('sisaSaldoText').textContent = formatRupiah(sisaSaldo);
 
-      let nomor = 1;
-
-      let dataTampil = transaksi.map((t, index) => ({
-        ...t,
-        indexAsli: index
-      }));
-
-      if(!dari && !sampai && jenisFilter === 'SEMUA'){
-        dataTampil = dataTampil.slice(-100).reverse();
-      } else {
-        dataTampil = dataTampil.reverse(); 
-      }
-
-      dataTampil.forEach((t) => {
-        if(dari && t.tanggal < dari) return;
-        if(sampai && t.tanggal > sampai) return;
-        if(jenisFilter !== 'SEMUA' && t.jenis !== jenisFilter) return;
-
+      difilter.forEach((t) => {
         const saldoSetelah = hitungSaldoSampai(t.indexAsli);
         let badgeClass;
         if(t.jenis === 'MASUK') badgeClass = 'badge-masuk';
