@@ -243,20 +243,79 @@ class Handler(BaseHTTPRequestHandler):
         self._send(200, {"ok": bool(row and row["ok"] == 1)})
 
     def _get_data(self):
+        from urllib.parse import urlparse, parse_qs
+        qs = parse_qs(urlparse(self.path).query)
+
+        def _q(key, default=""):
+            v = qs.get(key)
+            return v[0] if v else default
+
+        limit = 100
+        try:
+            page = int(_q("page", "1"))
+        except (TypeError, ValueError):
+            page = 1
+        if page < 1:
+            page = 1
+
+        dari = _q("dari")
+        sampai = _q("sampai")
+        jenis = _q("jenis", "SEMUA")
+        if jenis not in JENIS_VALID:
+            jenis = "SEMUA"
+
+        where = []
+        wparams = []
+        if dari:
+            where.append("tanggal >= %s")
+            wparams.append(dari)
+        if sampai:
+            where.append("tanggal <= %s")
+            wparams.append(sampai)
+        if jenis != "SEMUA":
+            where.append("jenis = %s")
+            wparams.append(jenis)
+        where_sql = (" WHERE " + " AND ".join(where)) if where else ""
+
         setting = query("SELECT id, saldo_awal, catatan, updated_at FROM public.brangkas_setting WHERE id = 1", fetch="one")
-        trx = query(
-            "SELECT id, tanggal, jam, jenis, nominal, keterangan, pengambil, created_at, sudah_disalin "
-            "FROM public.brangkas_transaksi ORDER BY tanggal ASC, jam ASC, created_at ASC",
+        saldo_awal = (setting or {}).get("saldo_awal", 0) if setting else 0
+
+        total = int((query("SELECT count(*) AS c FROM public.brangkas_transaksi" + where_sql, tuple(wparams), fetch="one") or {}).get("c", 0))
+
+        sums = query(
+            "SELECT "
+            "COALESCE(SUM(CASE WHEN jenis='MASUK' THEN nominal ELSE 0 END),0) AS masuk, "
+            "COALESCE(SUM(CASE WHEN jenis IN ('KELUAR','KASBON') THEN nominal ELSE 0 END),0) AS keluar "
+            "FROM public.brangkas_transaksi" + where_sql,
+            tuple(wparams),
+            fetch="one",
+        ) or {}
+
+        offset = (page - 1) * limit
+        rows = query(
+            "SELECT * FROM ("
+            " SELECT id, tanggal, jam, jenis, nominal, keterangan, pengambil, created_at, sudah_disalin,"
+            "   %s + SUM(CASE WHEN jenis='MASUK' THEN nominal WHEN jenis IN ('KELUAR','KASBON') THEN -nominal ELSE 0 END)"
+            "     OVER (ORDER BY tanggal ASC, jam ASC, created_at ASC, id ASC) AS saldo_setelah"
+            " FROM public.brangkas_transaksi"
+            ") sub" + where_sql
+            + " ORDER BY tanggal DESC, jam DESC, created_at DESC, id DESC LIMIT %s OFFSET %s",
+            tuple([saldo_awal] + wparams + [limit, offset]),
             fetch="all",
         )
-        self._send(
-            200,
-            {
-                "saldo_awal": (setting or {}).get("saldo_awal", 0) if setting else 0,
-                "catatan": (setting or {}).get("catatan") if setting else None,
-                "transaksi": trx,
-            },
-        )
+
+        total_pages = ((total + limit - 1) // limit) if total > 0 else 1
+
+        self._send(200, {
+            "saldo_awal": saldo_awal,
+            "catatan": (setting or {}).get("catatan") if setting else None,
+            "transaksi": rows,
+            "total": total,
+            "page": page,
+            "total_pages": total_pages,
+            "total_masuk": int(sums.get("masuk") or 0),
+            "total_keluar": int(sums.get("keluar") or 0),
+        })
 
     def _put_setting(self):
         if not self._origin_ok():
