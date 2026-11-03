@@ -173,3 +173,16 @@ permintaan). Konsekuensi & pengamanan yang tersisa:
   transaksi/saldo/modal/audit dibiarkan utuh.
 - Backup database tidak dihapus (tetap ada di lokal & VPS; tidak dipublikasikan ke Git).
 - Commit: `feat: remove password authentication from saldo brangkas`.
+
+## 11. Pembaruan 2026-11-03 — Pembersihan Sisa Supabase
+
+- `supabase/migrations/20260813_harden_brangkas_rls.sql` **dihapus**. Isinya function
+  `is_brangkas_user(uuid)` dan policy RLS `TO authenticated` berbasis `auth.uid()` —
+  peninggalan Supabase yang tidak pernah dipakai di PostgreSQL VPS (akses lewat role
+  `saldo_app` dengan policy `USING(true)`).
+- `deploy/setup-vps.sh`: variabel `.env` `SESSION_TTL_HOURS` dan `COOKIE_NAME` dihapus
+  (sisa era login, tidak dibaca oleh backend).
+- `deploy/setup-vps.sh`: restore `saldo-brangkas-supabase-backup.sql` kini **opsional** —
+  dilewati bila filenya tidak ada, sehingga setup VPS baru tidak gagal di tengah jalan.
+- `index.html` dan `backend/app.py` sudah bersih dari klien Supabase; yang tersisa hanya
+  komentar penjelas asal-usul ("pengganti Supabase").

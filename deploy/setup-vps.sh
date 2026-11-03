@@ -38,8 +38,6 @@ DB_USER=$DB_USER
 DB_PASSWORD=$PW
 BIND_HOST=127.0.0.1
 BIND_PORT=8787
-SESSION_TTL_HOURS=720
-COOKIE_NAME=sb_session
 APP_TZ=Asia/Jakarta
 EOF
   chmod 600 "$ENV_FILE"
@@ -48,8 +46,14 @@ else
   echo ".env sudah ada (dibiarkan)"
 fi
 
-sudo -u postgres psql -v ON_ERROR_STOP=1 -d "$DB_NAME" < "$BACKUP" >/dev/null
-echo "restore backup selesai"
+# Backup hanya ada kalau project ini pernah dimigrasikan dari Supabase.
+# Database baru yang kosong tidak perlu restore.
+if [ -f "$BACKUP" ]; then
+  sudo -u postgres psql -v ON_ERROR_STOP=1 -d "$DB_NAME" < "$BACKUP" >/dev/null
+  echo "restore backup selesai"
+else
+  echo "backup $BACKUP tidak ditemukan — melewati restore"
+fi
 
 sudo cp "$PROJECT_DIR/deploy/saldo-brangkas.service" /etc/systemd/system/saldo-brangkas.service
 sudo systemctl daemon-reload
