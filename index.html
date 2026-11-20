@@ -281,14 +281,14 @@
       <div class="panel">
         <div class="panel-title"><span class="small-icon icon-blue"><i class="fa-solid fa-gear"></i></span>Atur Saldo Awal</div>
         <label>Saldo Awal Brangkas</label>
-        <input id="saldoAwalInput" type="number" autocomplete="new-password" placeholder="Contoh: 500000">
+        <input id="saldoAwalInput" type="text" inputmode="numeric" autocomplete="new-password" placeholder="Contoh: 500.000">
         <button class="btn btn-blue" onclick="simpanSaldoAwal()"><i class="fa-regular fa-floppy-disk"></i> Simpan Saldo Awal</button>
       </div>
 
       <div class="panel">
         <div class="panel-title"><span class="small-icon icon-green"><i class="fa-solid fa-arrow-down"></i></span>Uang Masuk</div>
         <label>Nominal Masuk</label>
-        <input id="nominalMasuk" type="number" autocomplete="new-password" placeholder="Contoh: 250000">
+        <input id="nominalMasuk" type="text" inputmode="numeric" autocomplete="new-password" placeholder="Contoh: 250.000">
         <label>Keterangan</label>
         <textarea id="ketMasuk" autocomplete="new-password" autocapitalize="sentences" spellcheck="false" placeholder="Contoh: Pembayaran agen..."></textarea>
         <button class="btn btn-green" onclick="tambahMasuk()"><i class="fa-solid fa-circle-plus"></i> Tambah Uang Masuk</button>
@@ -301,7 +301,7 @@
           <button class="btn-toggle" id="btnKasbon" onclick="pilihJenisKeluar('KASBON')">Kasbon</button>
         </div>
         <label>Nominal Keluar</label>
-        <input id="nominalKeluar" type="number" autocomplete="new-password" placeholder="Contoh: 50000">
+        <input id="nominalKeluar" type="text" inputmode="numeric" autocomplete="new-password" placeholder="Contoh: 50.000">
         <label>Keterangan</label>
         <textarea id="ketKeluar" autocomplete="new-password" autocapitalize="sentences" spellcheck="false" placeholder="Contoh: Beli plastik, bensin, parkir, dll"></textarea>
         <label>Nama Pengambil</label>
@@ -630,7 +630,7 @@
 
     async function simpanSaldoAwal(){
       const input = document.getElementById('saldoAwalInput');
-      const nominal = Number(input.value);
+      const nominal = Number(String(input.value).replace(/\./g, ''));
 
       if(!nominal || nominal < 0){
         alert('Isi saldo awal dengan benar.');
@@ -672,7 +672,7 @@
     }
 
     async function tambahMasuk(){
-      const nominal = Number(document.getElementById('nominalMasuk').value);
+      const nominal = Number(String(document.getElementById('nominalMasuk').value).replace(/\./g, ''));
       const keterangan = document.getElementById('ketMasuk').value.trim();
 
       if(!nominal || nominal <= 0){
@@ -703,7 +703,7 @@
     }
 
     async function tambahKeluar(){
-      const nominal = Number(document.getElementById('nominalKeluar').value);
+      const nominal = Number(String(document.getElementById('nominalKeluar').value).replace(/\./g, ''));
       const keterangan = document.getElementById('ketKeluar').value.trim();
       const pengambil = document.getElementById('pengambilKeluar').value.trim();
       
@@ -921,6 +921,17 @@
     pasangKapitalAwal('ketMasuk');
     pasangKapitalAwal('ketKeluar');
     pasangKapitalAwal('.note-textarea');
+
+    // ===== FORMAT NOMINAL (titik ribuan otomatis saat mengetik) =====
+    function formatNominal(el){
+      const digits = el.value.replace(/[^\d]/g, '');
+      el.value = digits ? new Intl.NumberFormat('id-ID').format(parseInt(digits, 10)) : '';
+    }
+    ['saldoAwalInput', 'nominalMasuk', 'nominalKeluar'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', () => formatNominal(el));
+    });
 
     // ===== AUTENTIKASI =====
     // Sesi dicek lebih dulu; tanpa sesi, alihkan ke halaman login.
