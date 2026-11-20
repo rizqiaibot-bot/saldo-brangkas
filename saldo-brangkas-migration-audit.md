@@ -209,3 +209,16 @@ permintaan). Konsekuensi & pengamanan yang tersisa:
 - `deploy/nginx-saldo-brangkas.conf`: `login.html` diberi header no-cache.
 - Password bcrypt lama (`brangkas_users`) tetap tidak berlaku; tabel
   `brangkas_users`/`brangkas_sessions` tidak disentuh.
+
+## 13. Pembaruan 2026-11-20 (2) — Pengaturan Akun: Edit Password
+
+- `index.html`: tombol akun (ikon user-gear) di header membuka modal "Pengaturan Akun".
+  Isinya: username (read-only), password lama, password baru + ulangi, dan tombol
+  "Simpan Perubahan". Bila aplikasi masih mode terbuka (`LOGIN_PASSWORD` kosong),
+  kolom password lama disembunyikan dan muncul catatan pengaktifan login.
+- `backend/app.py`: endpoint baru `POST /api/akun/password` (wajib sesi; body
+  `{password_lama, password_baru}`). Password lama diverifikasi (`hmac.compare_digest`;
+  dilewati di mode terbuka), password baru minimal 4 karakter. Nilai ditulis ke `.env`
+  (baris `LOGIN_PASSWORD`) dan variabel in-memory diperbarui; semua sesi lain dicabut.
+- `/api/session` kini ikut mengembalikan `open_mode` (true bila `LOGIN_PASSWORD` kosong)
+  supaya modal tahu apakah kolom password lama perlu ditampilkan.

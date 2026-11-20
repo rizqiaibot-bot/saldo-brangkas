@@ -277,6 +277,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._logout()
             if path == "/api/session" and method == "GET":
                 return self._session()
+            if path == "/api/akun/password" and method == "POST":
+                return self._change_password()
             if path == "/api/data" and method == "GET":
                 return self._get_data()
             if path == "/api/setting" and method == "PUT":
@@ -350,7 +352,57 @@ class Handler(BaseHTTPRequestHandler):
 
     def _session(self):
         ok = self._check_auth()
-        self._send(200, {"authenticated": ok, "username": LOGIN_USER if ok else None})
+        self._send(200, {
+            "authenticated": ok,
+            "username": LOGIN_USER if ok else None,
+            "open_mode": not bool(LOGIN_PASSWORD),
+        })
+
+    def _change_password(self):
+        # Ganti password login. Menulis LOGIN_PASSWORD ke .env dan mencabut
+        # semua sesi lain (sesi pengguna yang sedang mengubah tetap hidup).
+        global LOGIN_PASSWORD
+        if not self._origin_ok():
+            return self._err(403, "Origin tidak diizinkan")
+        body = self._read_json() or {}
+        lama = str(body.get("password_lama") or "")
+        baru = str(body.get("password_baru") or "")
+        if not baru:
+            return self._err(400, "Password baru tidak boleh kosong")
+        if len(baru) < 4:
+            return self._err(400, "Password baru minimal 4 karakter")
+        if len(baru) > 200:
+            return self._err(400, "Password baru terlalu panjang")
+        if LOGIN_PASSWORD and not hmac.compare_digest(lama, LOGIN_PASSWORD):
+            return self._err(400, "Password lama salah")
+
+        env_path = os.path.join(PROJECT_DIR, ".env")
+        try:
+            with open(env_path, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+        except OSError:
+            lines = []
+        found = False
+        for i, line in enumerate(lines):
+            if line.strip().startswith("LOGIN_PASSWORD="):
+                lines[i] = "LOGIN_PASSWORD=%s\n" % baru
+                found = True
+                break
+        if not found:
+            lines.append("LOGIN_PASSWORD=%s\n" % baru)
+        try:
+            with open(env_path, "w", encoding="utf-8") as f:
+                f.writelines(lines)
+        except OSError as e:
+            self.log_message("Gagal menulis .env: %s", repr(e))
+            return self._err(500, "Gagal menyimpan password (cek izin file .env)")
+
+        LOGIN_PASSWORD = baru
+        current = self._get_cookie("sb_session")
+        with SESSIONS_LOCK:
+            for t in [t for t in SESSIONS if t != current]:
+                SESSIONS.pop(t, None)
+        self._send(200, {"ok": True})
 
     # ---------- endpoints ---------- #
     def _health(self):
