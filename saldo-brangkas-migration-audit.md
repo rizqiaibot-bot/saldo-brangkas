@@ -222,3 +222,13 @@ permintaan). Konsekuensi & pengamanan yang tersisa:
   (baris `LOGIN_PASSWORD`) dan variabel in-memory diperbarui; semua sesi lain dicabut.
 - `/api/session` kini ikut mengembalikan `open_mode` (true bila `LOGIN_PASSWORD` kosong)
   supaya modal tahu apakah kolom password lama perlu ditampilkan.
+
+## 14. Pembaruan 2026-11-20 (3) — HTTPS & Domain Baru
+
+- Domain baru didaftarkan: **`brangkas.biz.id`** (PANDI via Domainesia, 20 Nov 2026).
+- Record A: `saldo.brangkas.biz.id` → `103.127.96.23`.
+- Sertifikat Let's Encrypt (certbot) aktif untuk `saldo.brangkas.biz.id`,
+  auto-renew terjadwal. HTTP → HTTPS redirect otomatis.
+- Server block nginx: `/etc/nginx/sites-available/brangkas-https` (repo:
+  `deploy/nginx-brangkas-https.conf`), skrip `deploy/setup-https.sh`.
+- Blok IP lama (`http://103.127.96.23/`) tetap jalan sebagai cadangan HTTP.
