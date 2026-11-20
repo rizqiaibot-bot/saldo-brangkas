@@ -190,8 +190,8 @@ permintaan). Konsekuensi & pengamanan yang tersisa:
 ## 12. Pembaruan 2026-11-20 — Penambahan Halaman Login
 
 - `login.html`: halaman login terpisah (username + password, gaya sama dengan aplikasi).
-  Setelah login berhasil, dialihkan ke `index.html`; bila sesi masih aktif, langsung
-  dialihkan tanpa perlu login ulang.
+  Setelah login berhasil, dialihkan ke `/` (alamat bersih tanpa `index.html`); bila sesi
+  masih aktif, langsung dialihkan tanpa perlu login ulang.
 - `index.html`: saat dibuka tanpa sesi, langsung dialihkan ke `login.html`; tombol
   "Keluar" di pojok kanan header. Data tidak dimuat sebelum login berhasil. Sesi
   kedaluwarsa (HTTP 401) otomatis kembali ke halaman login.

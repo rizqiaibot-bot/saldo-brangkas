@@ -114,7 +114,7 @@
       try {
         const s = await api('/session');
         if (s && s.authenticated) {
-          window.location.replace('/index.html');
+          window.location.replace('/');
         }
       } catch (e) {
         // Backend belum siap — biarkan form login tetap dipakai.
@@ -146,7 +146,7 @@
 
       try {
         await api('/login', { method:'POST', body:{ username, password } });
-        window.location.replace('/index.html');
+        window.location.replace('/');
       } catch (err) {
         showError(err.message);
         btn.disabled = false;
