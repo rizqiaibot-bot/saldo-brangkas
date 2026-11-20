@@ -173,6 +173,13 @@
     .pagination-bar .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;filter:none;}
     .page-info{font-size:14px;font-weight:700;color:var(--muted);}
 
+    /* Tombol keluar di header */
+    .btn-logout{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;transition:.15s;}
+    .btn-logout:hover{background:rgba(255,255,255,.22);}
+    @media(max-width:640px){
+      .btn-logout{top:10px;right:10px;padding:6px 10px;font-size:12px;}
+    }
+
     @media(max-width:1100px){
       .summary{grid-template-columns:repeat(2,1fr);}
       .modal-notes-row{flex-direction:column;}
@@ -204,6 +211,7 @@
       <h1><i class="fa-solid fa-vault"></i> SALDO BRANGKAS</h1>
       <div class="clock"><i class="fa-regular fa-clock"></i><span id="liveClock">Memuat waktu...</span></div>
       <div class="db-status" id="dbStatus">Database VPS: menghubungkan...</div>
+      <button class="btn-logout" onclick="logout()" title="Keluar"><i class="fa-solid fa-right-from-bracket"></i> Keluar</button>
     </header>
 
     <section class="summary">
@@ -340,6 +348,11 @@
       const res = await fetch('/api' + path, opts);
       let data = null;
       try { data = await res.json(); } catch (e) {}
+      // Sesi kedaluwarsa -> alihkan ke halaman login
+      if (res.status === 401){
+        window.location.replace('/login.html');
+        throw new Error('Sesi berakhir. Silakan login ulang.');
+      }
       if (!res.ok) throw new Error((data && data.error) || ('HTTP ' + res.status));
       return data;
     }
@@ -350,6 +363,11 @@
     let jenisKeluar = 'KELUAR';
     let currentPage = 1;
     let pageMeta = { total: 0, page: 1, total_pages: 1, total_masuk: 0, total_keluar: 0 };
+
+    async function logout(){
+      try{ await api('/logout', { method:'POST' }); }catch(e){}
+      window.location.replace('/login.html');
+    }
 
     function setStatus(text, ok = true){
       const el = document.getElementById('dbStatus');
@@ -751,9 +769,19 @@
       }
     }
 
-    // ===== TANPA AUTENTIKASI =====
-    // Login/password sudah dihapus. Halaman langsung memuat data.
+    // ===== AUTENTIKASI =====
+    // Sesi dicek lebih dulu; tanpa sesi, alihkan ke halaman login.
     async function init(){
+      try{
+        const s = await api('/session');
+        if(!s || !s.authenticated){
+          window.location.replace('/login.html');
+          return;
+        }
+      }catch(e){
+        setStatus('Database VPS error: cek koneksi backend dan database.', false);
+        return;
+      }
       await loadData();
     }
 

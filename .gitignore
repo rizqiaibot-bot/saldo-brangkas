@@ -3,3 +3,5 @@
 !.env.example
 .owner-password.txt
 saldo-brangkas-supabase-backup.sql
+__pycache__/
+*.pyc

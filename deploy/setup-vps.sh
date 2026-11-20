@@ -28,6 +28,7 @@ fi
 
 if [ ! -f "$ENV_FILE" ]; then
   PW="$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | cut -c1-32)"
+  LOGIN_PW="$(head -c 12 /dev/urandom | base64 | tr -d '/+=' | cut -c1-12)"
   sudo -u postgres psql -c "ALTER ROLE $DB_USER WITH PASSWORD '$PW';" >/dev/null
   umask 077
   cat > "$ENV_FILE" <<EOF
@@ -39,11 +40,15 @@ DB_PASSWORD=$PW
 BIND_HOST=127.0.0.1
 BIND_PORT=8787
 APP_TZ=Asia/Jakarta
+LOGIN_USER=admin
+LOGIN_PASSWORD=$LOGIN_PW
+SESSION_TTL_HOURS=12
 EOF
   chmod 600 "$ENV_FILE"
   echo ".env dibuat (password DB acak, tidak ditampilkan)"
+  echo "Password login aplikasi: $LOGIN_PW (user: admin — simpan baik-baik)"
 else
-  echo ".env sudah ada (dibiarkan)"
+  echo ".env sudah ada (dibiarkan). Tambahkan LOGIN_USER/LOGIN_PASSWORD untuk mengaktifkan login."
 fi
 
 # Backup hanya ada kalau project ini pernah dimigrasikan dari Supabase.
@@ -63,6 +68,7 @@ echo "service saldo-brangkas dijalankan"
 
 sudo mkdir -p "$WEBROOT"
 sudo cp "$PROJECT_DIR/index.html" "$WEBROOT/index.html"
+sudo cp "$PROJECT_DIR/login.html" "$WEBROOT/login.html"
 sudo chown -R www-data:www-data "$WEBROOT"
 sudo cp "$PROJECT_DIR/deploy/nginx-saldo-brangkas.conf" /etc/nginx/sites-available/saldo-brangkas
 sudo ln -sf /etc/nginx/sites-available/saldo-brangkas /etc/nginx/sites-enabled/saldo-brangkas

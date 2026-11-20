@@ -3,15 +3,20 @@
 Backend API Saldo Brangkas (pengganti Supabase PostgREST).
 
 Catatan keamanan:
-- Aplikasi ini SENGAJA berjalan tanpa login/password (sesuai permintaan).
-- Tidak ada session, cookie, atau bcrypt. Semua endpoint bersifat terbuka.
+- Login sederhana: username+password dari .env (LOGIN_USER / LOGIN_PASSWORD)
+  + cookie sesi HttpOnly (sb_session). Sesi disimpan di memori.
+- Bila LOGIN_PASSWORD kosong, aplikasi berjalan TANPA login (mode terbuka).
 - Akses database tetap dibatasi lewat role terbatas "saldo_app" + RLS.
 
 Tidak ada framework eksternal; hanya psycopg2 + stdlib.
 """
+import hmac
 import json
 import os
 import re
+import secrets
+import threading
+import time
 from datetime import date, datetime
 from decimal import Decimal
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -51,11 +56,28 @@ BIND_HOST = os.environ.get("BIND_HOST", "127.0.0.1")
 BIND_PORT = int(os.environ.get("BIND_PORT", "8787"))
 TZ = ZoneInfo(os.environ.get("APP_TZ", "Asia/Jakarta"))
 
+LOGIN_USER = os.environ.get("LOGIN_USER", "admin")
+LOGIN_PASSWORD = os.environ.get("LOGIN_PASSWORD", "")
+try:
+    SESSION_TTL_SECONDS = int(os.environ.get("SESSION_TTL_HOURS", "12")) * 3600
+except ValueError:
+    SESSION_TTL_SECONDS = 12 * 3600
+
 JENIS_VALID = {"MASUK", "KELUAR", "KASBON"}
 AUDIT_STATUS_VALID = {"COCOK", "PLUS", "MINUS"}
 MODAL_STATUS_VALID = {"BELUM_DIKEMBALIKAN", "SUDAH_DIKEMBALIKAN"}
 
 MAX_BODY = 256 * 1024
+
+# Sesi login in-memory (hilang saat service di-restart; pengguna tinggal login lagi).
+SESSIONS = {}
+SESSIONS_LOCK = threading.Lock()
+
+# Rate-limit login: maks 5 percobaan gagal per 15 menit per IP.
+LOGIN_FAILS = {}
+LOGIN_FAILS_LOCK = threading.Lock()
+LOGIN_FAIL_LIMIT = 5
+LOGIN_FAIL_WINDOW = 900
 
 
 # --------------------------------------------------------------------------- #
@@ -168,6 +190,51 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             return None
 
+    # ---------- autentikasi ---------- #
+    def _get_cookie(self, name):
+        header = self.headers.get("Cookie", "")
+        for part in header.split(";"):
+            part = part.strip()
+            if part.startswith(name + "="):
+                return part[len(name) + 1:]
+        return None
+
+    def _is_public(self, path):
+        return path in {"/api/health", "/api/login", "/api/logout", "/api/session"}
+
+    def _check_auth(self):
+        if not LOGIN_PASSWORD:
+            return True  # login belum dikonfigurasi -> mode terbuka
+        token = self._get_cookie("sb_session")
+        if not token:
+            return False
+        with SESSIONS_LOCK:
+            sess = SESSIONS.get(token)
+            if not sess:
+                return False
+            if sess["expires"] < time.time():
+                SESSIONS.pop(token, None)
+                return False
+            return True
+
+    def _login_rate_limited(self, ip):
+        now = time.time()
+        with LOGIN_FAILS_LOCK:
+            fails = [t for t in LOGIN_FAILS.get(ip, []) if now - t < LOGIN_FAIL_WINDOW]
+            LOGIN_FAILS[ip] = fails
+            return len(fails) >= LOGIN_FAIL_LIMIT
+
+    def _record_login_fail(self, ip):
+        with LOGIN_FAILS_LOCK:
+            LOGIN_FAILS.setdefault(ip, []).append(time.time())
+
+    def _clear_login_fails(self, ip):
+        with LOGIN_FAILS_LOCK:
+            LOGIN_FAILS.pop(ip, None)
+
+    def _set_session_cookie(self, token, max_age):
+        return "sb_session=%s; HttpOnly; SameSite=Lax; Path=/; Max-Age=%d" % (token, max_age)
+
     def _origin_ok(self):
         # Tanpa autentikasi, tetap tolak request lintas-situs untuk metode pengubah data
         # (mengurangi risiko CSRF dari situs lain).
@@ -200,8 +267,16 @@ class Handler(BaseHTTPRequestHandler):
     def _route(self, method):
         path = self.path.split("?", 1)[0].rstrip("/") or "/"
         try:
+            if not self._is_public(path) and not self._check_auth():
+                return self._err(401, "Login diperlukan")
             if path == "/api/health" and method == "GET":
                 return self._health()
+            if path == "/api/login" and method == "POST":
+                return self._login()
+            if path == "/api/logout" and method == "POST":
+                return self._logout()
+            if path == "/api/session" and method == "GET":
+                return self._session()
             if path == "/api/data" and method == "GET":
                 return self._get_data()
             if path == "/api/setting" and method == "PUT":
@@ -236,6 +311,46 @@ class Handler(BaseHTTPRequestHandler):
         except Exception as e:
             self.log_message("Server error: %s", repr(e))
             return self._err(500, "Kesalahan server")
+
+    # ---------- login / sesi ---------- #
+    def _login(self):
+        if not self._origin_ok():
+            return self._err(403, "Origin tidak diizinkan")
+        if not LOGIN_PASSWORD:
+            return self._err(503, "Login belum dikonfigurasi (LOGIN_PASSWORD kosong)")
+        body = self._read_json() or {}
+        username = clean_str(body.get("username"), 100, "")
+        password = str(body.get("password") or "")
+        ip = self.client_address[0] or "?"
+        if self._login_rate_limited(ip):
+            return self._err(429, "Terlalu banyak percobaan. Coba lagi 15 menit lagi.")
+        if not (hmac.compare_digest(username, LOGIN_USER) and hmac.compare_digest(password, LOGIN_PASSWORD)):
+            self._record_login_fail(ip)
+            return self._err(401, "Username atau password salah")
+        self._clear_login_fails(ip)
+        token = secrets.token_urlsafe(32)
+        expires = time.time() + SESSION_TTL_SECONDS
+        with SESSIONS_LOCK:
+            SESSIONS[token] = {"expires": expires}
+            # bersihkan sesi kedaluwarsa
+            for t in [t for t, s in SESSIONS.items() if s["expires"] < time.time()]:
+                SESSIONS.pop(t, None)
+        self._send(200, {"ok": True, "username": LOGIN_USER}, headers={
+            "Set-Cookie": self._set_session_cookie(token, SESSION_TTL_SECONDS),
+        })
+
+    def _logout(self):
+        token = self._get_cookie("sb_session")
+        if token:
+            with SESSIONS_LOCK:
+                SESSIONS.pop(token, None)
+        self._send(200, {"ok": True}, headers={
+            "Set-Cookie": self._set_session_cookie("", 0),
+        })
+
+    def _session(self):
+        ok = self._check_auth()
+        self._send(200, {"authenticated": ok, "username": LOGIN_USER if ok else None})
 
     # ---------- endpoints ---------- #
     def _health(self):
@@ -538,7 +653,8 @@ class Handler(BaseHTTPRequestHandler):
 
 def main():
     server = ThreadingHTTPServer((BIND_HOST, BIND_PORT), Handler)
-    print("Saldo Brangkas API listening on %s:%d (db=%s) [tanpa autentikasi]" % (BIND_HOST, BIND_PORT, DB_NAME), flush=True)
+    mode = "aktif" if LOGIN_PASSWORD else "NONAKTIF (LOGIN_PASSWORD kosong)"
+    print("Saldo Brangkas API listening on %s:%d (db=%s) [login: %s]" % (BIND_HOST, BIND_PORT, DB_NAME, mode), flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

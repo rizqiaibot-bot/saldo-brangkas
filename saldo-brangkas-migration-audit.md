@@ -186,3 +186,26 @@ permintaan). Konsekuensi & pengamanan yang tersisa:
   dilewati bila filenya tidak ada, sehingga setup VPS baru tidak gagal di tengah jalan.
 - `index.html` dan `backend/app.py` sudah bersih dari klien Supabase; yang tersisa hanya
   komentar penjelas asal-usul ("pengganti Supabase").
+
+## 12. Pembaruan 2026-11-20 — Penambahan Halaman Login
+
+- `login.html`: halaman login terpisah (username + password, gaya sama dengan aplikasi).
+  Setelah login berhasil, dialihkan ke `index.html`; bila sesi masih aktif, langsung
+  dialihkan tanpa perlu login ulang.
+- `index.html`: saat dibuka tanpa sesi, langsung dialihkan ke `login.html`; tombol
+  "Keluar" di pojok kanan header. Data tidak dimuat sebelum login berhasil. Sesi
+  kedaluwarsa (HTTP 401) otomatis kembali ke halaman login.
+- `backend/app.py`: endpoint baru `/api/login`, `/api/logout`, `/api/session`. Sesi
+  disimpan di memori (token acak `secrets.token_urlsafe`), dikirim sebagai cookie
+  `sb_session` (HttpOnly; SameSite=Lax; TTL default 12 jam). Semua endpoint `/api/*`
+  kecuali `/api/health`, `/api/login`, `/api/logout`, `/api/session` menolak request
+  tanpa sesi (HTTP 401). Rate-limit login: 5 percobaan gagal per 15 menit per IP.
+- Kredensial dari `.env`: `LOGIN_USER`, `LOGIN_PASSWORD`, `SESSION_TTL_HOURS`. Bila
+  `LOGIN_PASSWORD` kosong, aplikasi tetap berjalan terbuka seperti sebelumnya
+  (kompatibilitas instalasi lama yang `.env`-nya belum diubah).
+- `deploy/setup-vps.sh`: saat membuat `.env` baru, `LOGIN_PASSWORD` dibuat acak dan
+  ditampilkan satu kali di terminal (disimpan sendiri oleh pengguna); `login.html`
+  ikut disalin ke webroot.
+- `deploy/nginx-saldo-brangkas.conf`: `login.html` diberi header no-cache.
+- Password bcrypt lama (`brangkas_users`) tetap tidak berlaku; tabel
+  `brangkas_users`/`brangkas_sessions` tidak disentuh.
