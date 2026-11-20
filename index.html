@@ -257,7 +257,7 @@
       <div class="summary-card soft-cyan" style="padding: 22px;">
         <div style="width: 100%;">
           <p><i class="fa-regular fa-comment-dots" style="color: var(--cyan); margin-right: 6px;"></i>Catatan Brangkas</p>
-          <textarea class="note-textarea" placeholder="Tulis catatan penting di sini (Otomatis tersimpan)..." oninput="autoSaveCatatan()"></textarea>
+          <textarea class="note-textarea" autocomplete="off" placeholder="Tulis catatan penting di sini (Otomatis tersimpan)..." oninput="autoSaveCatatan()"></textarea>
           <div class="save-badge-container">
             <span id="saveStatusBadge" class="save-status-badge">
               <i id="saveStatusIcon" class="fa-solid fa-cloud"></i>
@@ -273,16 +273,16 @@
       <div class="panel">
         <div class="panel-title"><span class="small-icon icon-blue"><i class="fa-solid fa-gear"></i></span>Atur Saldo Awal</div>
         <label>Saldo Awal Brangkas</label>
-        <input id="saldoAwalInput" type="number" placeholder="Contoh: 500000">
+        <input id="saldoAwalInput" type="number" autocomplete="off" placeholder="Contoh: 500000">
         <button class="btn btn-blue" onclick="simpanSaldoAwal()"><i class="fa-regular fa-floppy-disk"></i> Simpan Saldo Awal</button>
       </div>
 
       <div class="panel">
         <div class="panel-title"><span class="small-icon icon-green"><i class="fa-solid fa-arrow-down"></i></span>Uang Masuk</div>
         <label>Nominal Masuk</label>
-        <input id="nominalMasuk" type="number" placeholder="Contoh: 250000">
+        <input id="nominalMasuk" type="number" autocomplete="off" placeholder="Contoh: 250000">
         <label>Keterangan</label>
-        <textarea id="ketMasuk" placeholder="Contoh: Pembayaran agen..."></textarea>
+        <textarea id="ketMasuk" autocomplete="off" placeholder="Contoh: Pembayaran agen..."></textarea>
         <button class="btn btn-green" onclick="tambahMasuk()"><i class="fa-solid fa-circle-plus"></i> Tambah Uang Masuk</button>
       </div>
 
@@ -293,11 +293,11 @@
           <button class="btn-toggle" id="btnKasbon" onclick="pilihJenisKeluar('KASBON')">Kasbon</button>
         </div>
         <label>Nominal Keluar</label>
-        <input id="nominalKeluar" type="number" placeholder="Contoh: 50000">
+        <input id="nominalKeluar" type="number" autocomplete="off" placeholder="Contoh: 50000">
         <label>Keterangan</label>
-        <textarea id="ketKeluar" placeholder="Contoh: Beli plastik, bensin, parkir, dll"></textarea>
+        <textarea id="ketKeluar" autocomplete="off" placeholder="Contoh: Beli plastik, bensin, parkir, dll"></textarea>
         <label>Nama Pengambil / User</label>
-        <select id="pengambilKeluar">
+        <select id="pengambilKeluar" autocomplete="off">
           <option value="" selected disabled>Pilih Nama Pengambil</option>
           <option value="Rizkin">Rizkin</option>
           <option value="Pak Imad">Pak Imad</option>
@@ -315,15 +315,15 @@
       <div class="filter-grid">
         <div class="filter-item">
           <label>Dari Tanggal</label>
-          <input id="filterDari" type="date">
+          <input id="filterDari" type="date" autocomplete="off">
         </div>
         <div class="filter-item">
           <label>Sampai Tanggal</label>
-          <input id="filterSampai" type="date">
+          <input id="filterSampai" type="date" autocomplete="off">
         </div>
         <div class="filter-item">
           <label>Jenis Transaksi</label>
-          <select id="filterJenis">
+          <select id="filterJenis" autocomplete="off">
             <option value="SEMUA">Semua Jenis</option>
             <option value="MASUK">MASUK</option>
             <option value="KELUAR">KELUAR</option>
