@@ -265,7 +265,7 @@
       <div class="summary-card soft-cyan" style="padding: 22px;">
         <div style="width: 100%;">
           <p><i class="fa-regular fa-comment-dots" style="color: var(--cyan); margin-right: 6px;"></i>Catatan Brangkas</p>
-          <textarea class="note-textarea" autocomplete="new-password" placeholder="Tulis catatan penting di sini (Otomatis tersimpan)..." oninput="autoSaveCatatan()"></textarea>
+          <textarea class="note-textarea" autocomplete="new-password" autocapitalize="none" spellcheck="false" placeholder="Tulis catatan penting di sini (Otomatis tersimpan)..." oninput="autoSaveCatatan()"></textarea>
           <div class="save-badge-container">
             <span id="saveStatusBadge" class="save-status-badge">
               <i id="saveStatusIcon" class="fa-solid fa-cloud"></i>
@@ -290,7 +290,7 @@
         <label>Nominal Masuk</label>
         <input id="nominalMasuk" type="number" autocomplete="new-password" placeholder="Contoh: 250000">
         <label>Keterangan</label>
-        <textarea id="ketMasuk" autocomplete="new-password" placeholder="Contoh: Pembayaran agen..."></textarea>
+        <textarea id="ketMasuk" autocomplete="new-password" autocapitalize="none" spellcheck="false" placeholder="Contoh: Pembayaran agen..."></textarea>
         <button class="btn btn-green" onclick="tambahMasuk()"><i class="fa-solid fa-circle-plus"></i> Tambah Uang Masuk</button>
       </div>
 
@@ -303,7 +303,7 @@
         <label>Nominal Keluar</label>
         <input id="nominalKeluar" type="number" autocomplete="new-password" placeholder="Contoh: 50000">
         <label>Keterangan</label>
-        <textarea id="ketKeluar" autocomplete="new-password" placeholder="Contoh: Beli plastik, bensin, parkir, dll"></textarea>
+        <textarea id="ketKeluar" autocomplete="new-password" autocapitalize="none" spellcheck="false" placeholder="Contoh: Beli plastik, bensin, parkir, dll"></textarea>
         <label>Nama Pengambil</label>
         <select id="pengambilKeluar" autocomplete="new-password">
           <option value="" selected disabled>Pilih Nama Pengambil</option>
@@ -379,12 +379,12 @@
       <input id="akunUsername" type="text" disabled>
       <div id="akunLamaWrap">
         <label for="akunPasswordLama">Password Lama</label>
-        <input id="akunPasswordLama" type="password" placeholder="Password saat ini" autocomplete="current-password">
+        <input id="akunPasswordLama" type="password" autocapitalize="none" placeholder="Password saat ini" autocomplete="current-password">
       </div>
       <label for="akunPasswordBaru">Password Baru</label>
-      <input id="akunPasswordBaru" type="password" placeholder="Minimal 4 karakter" autocomplete="new-password">
+      <input id="akunPasswordBaru" type="password" autocapitalize="none" placeholder="Minimal 4 karakter" autocomplete="new-password">
       <label for="akunPasswordBaru2">Ulangi Password Baru</label>
-      <input id="akunPasswordBaru2" type="password" placeholder="Ketik ulang password baru" autocomplete="new-password">
+      <input id="akunPasswordBaru2" type="password" autocapitalize="none" placeholder="Ketik ulang password baru" autocomplete="new-password">
       <div id="akunError" class="akun-error"></div>
       <div id="akunOk" class="akun-ok"></div>
       <button class="btn btn-blue" onclick="simpanPassword()"><i class="fa-regular fa-floppy-disk"></i> Simpan Perubahan</button>
