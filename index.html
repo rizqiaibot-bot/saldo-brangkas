@@ -903,6 +903,25 @@
       }
     }
 
+    // ===== KAPITAL AWAL (desktop) =====
+    // Di komputer, browser tidak auto-kapital seperti keyboard HP.
+    // Jadi huruf pertama saat mulai mengetik dibuat kapital oleh JS.
+    function pasangKapitalAwal(sel){
+      const el = typeof sel === 'string' ? document.getElementById(sel) : document.querySelector(sel);
+      if (!el) return;
+      let prev = el.value;
+      el.addEventListener('input', () => {
+        const v = el.value;
+        if (prev === '' && v && /^[a-z]/.test(v)) {
+          el.value = v.charAt(0).toUpperCase() + v.slice(1);
+        }
+        prev = el.value;
+      });
+    }
+    pasangKapitalAwal('ketMasuk');
+    pasangKapitalAwal('ketKeluar');
+    pasangKapitalAwal('.note-textarea');
+
     // ===== AUTENTIKASI =====
     // Sesi dicek lebih dulu; tanpa sesi, alihkan ke halaman login.
     async function init(){
