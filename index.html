@@ -84,6 +84,14 @@
     label{display:block;font-weight:700;font-size:14px;margin-bottom:8px;}
     input, textarea, select{width:100%;border:1px solid #cfd8e3;background:#fff;border-radius:10px;padding:12px 13px;font-size:14px;outline:none;margin-bottom:14px;height:44px;transition:.2s;}
     input:focus, textarea:focus, select:focus{border-color:#38bdf8;box-shadow:0 0 0 4px rgba(56,189,248,.14);}
+    /* Paksa kolom tetap putih walau Chrome menandai sebagai autofilled */
+    input:-webkit-autofill, textarea:-webkit-autofill, select:-webkit-autofill{
+      -webkit-box-shadow:0 0 0 1000px #fff inset !important;
+      box-shadow:0 0 0 1000px #fff inset !important;
+      -webkit-text-fill-color:#0f172a !important;
+      caret-color:#0f172a;
+      transition:background-color 999999s ease-out;
+    }
     textarea{min-height:82px;resize:vertical;}
 
     .btn{width:100%;border:none;border-radius:10px;padding:13px 16px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;transition:.18s ease;height:44px;}
@@ -898,6 +906,14 @@
     // ===== AUTENTIKASI =====
     // Sesi dicek lebih dulu; tanpa sesi, alihkan ke halaman login.
     async function init(){
+      // Kalahkan heuristik autofill Chrome: acak name + matikan autocomplete
+      // di semua kolom data (kolom di modal akun/login tidak diubah).
+      document.querySelectorAll('input, textarea, select').forEach((el) => {
+        if (el.closest('#akunOverlay')) return;
+        el.setAttribute('autocomplete', 'off');
+        el.setAttribute('name', 'sb_' + Math.random().toString(36).slice(2, 10));
+      });
+
       try{
         const s = await api('/session');
         if(!s || !s.authenticated){
